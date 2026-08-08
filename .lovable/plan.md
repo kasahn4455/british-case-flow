@@ -137,6 +137,9 @@ interface MockEnquiry {
 
 ~12 records covering all five priorities and a spread of categories/statuses. Every one of CRITICAL, URGENT, PRIORITY, MANUAL_REVIEW and ROUTINE is present in the fixture set and has its own badge treatment, summary card and table styling. Priorities are hardcoded fixture values; summary card counts are a simple count of rows by their stored priority — a display count, never a classification.
 
+Rule IDs are neutral, meaningless display placeholders only — `DEMO-RULE-001`, `DEMO-RULE-002`, `MOCK-ROUTE-001`. No identifier encodes deadline periods, legal tests or routing logic (nothing like `RULE-HO-DEC-14D`).
+
+
 ## Staff app framing and scope
 
 - A persistent "Demo mode — fictional data only" banner sits in the `/app` layout chrome (and on `/login`), since authentication does not exist in Phase 1.
