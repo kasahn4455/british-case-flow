@@ -22,7 +22,7 @@ export function KnownDateField({
   legend: string;
   value: DateAnswer;
   onChange: (next: DateAnswer) => void;
-  error?: string;
+  error?: string | undefined;
 }) {
   const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);

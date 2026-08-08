@@ -6,9 +6,9 @@ export function SectionCard({
   description,
   children,
 }: {
-  step?: string;
+  step?: string | undefined;
   title: string;
-  description?: ReactNode;
+  description?: ReactNode | undefined;
   children: ReactNode;
 }) {
   return (

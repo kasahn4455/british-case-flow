@@ -14,12 +14,12 @@ export function TextField({
   label: string;
   value: string;
   onChange: (value: string) => void;
-  type?: "text" | "email" | "tel";
-  hint?: string;
-  error?: string;
-  maxLength?: number;
-  autoComplete?: string;
-  optional?: boolean;
+  type?: ("text" | "email" | "tel") | undefined;
+  hint?: string | undefined;
+  error?: string | undefined;
+  maxLength?: number | undefined;
+  autoComplete?: string | undefined;
+  optional?: boolean | undefined;
 }) {
   const id = useId();
   const errorId = `${id}-error`;

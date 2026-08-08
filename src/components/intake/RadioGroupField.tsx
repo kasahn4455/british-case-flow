@@ -11,12 +11,12 @@ export function RadioGroupField({
   columns = 1,
 }: {
   legend: string;
-  hint?: string;
+  hint?: string | undefined;
   options: Option[];
   value: string;
   onChange: (value: string) => void;
-  error?: string;
-  columns?: 1 | 2;
+  error?: string | undefined;
+  columns?: (1 | 2) | undefined;
 }) {
   const name = useId();
   const errorId = `${name}-error`;

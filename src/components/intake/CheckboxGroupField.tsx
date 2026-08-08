@@ -11,12 +11,12 @@ export function CheckboxGroupField({
   error,
 }: {
   legend: string;
-  hint?: string;
+  hint?: string | undefined;
   options: Option[];
   values: string[];
   onToggle: (value: string, checked: boolean) => void;
-  isDisabled?: (value: string) => boolean;
-  error?: string;
+  isDisabled?: ((value: string) => boolean) | undefined;
+  error?: string | undefined;
 }) {
   const id = useId();
   const errorId = `${id}-error`;

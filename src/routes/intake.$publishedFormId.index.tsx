@@ -108,17 +108,17 @@ function IntakeForm() {
         if (!found[key]) found[key] = issue.message;
       }
     }
-    if (!v.category) found.category = "Select the option that best describes your enquiry";
-    if (!v.location) found.location = "Select where you are currently";
+    if (!v.category) found["category"] = "Select the option that best describes your enquiry";
+    if (!v.location) found["location"] = "Select where you are currently";
     if (v.urgency.length === 0)
-      found.urgency = "Select at least one option, or choose “None of these”";
-    if (showLetterWords(v) && !v.letterWords) found.letterWords = "Select an option";
+      found["urgency"] = "Select at least one option, or choose “None of these”";
+    if (showLetterWords(v) && !v.letterWords) found["letterWords"] = "Select an option";
     if (showDetentionQuestions(v)) {
-      if (!v.currentlyDetained) found.currentlyDetained = "Select an option";
-      if (!v.removalDateGiven) found.removalDateGiven = "Select an option";
+      if (!v.currentlyDetained) found["currentlyDetained"] = "Select an option";
+      if (!v.removalDateGiven) found["removalDateGiven"] = "Select an option";
     }
     if (showLetterDeadlineQuestion(v) && !v.letterDeadlineStated)
-      found.letterDeadlineStated = "Select an option";
+      found["letterDeadlineStated"] = "Select an option";
 
     const dateChecks: [DateKey, boolean][] = [
       ["visaExpiry", showVisaExpiryDate(v)],
@@ -187,7 +187,7 @@ function IntakeForm() {
             label="Full name"
             value={values.fullName}
             onChange={(v) => set("fullName", v)}
-            error={errors.fullName}
+            error={errors["fullName"]}
             maxLength={120}
             autoComplete="name"
           />
@@ -196,7 +196,7 @@ function IntakeForm() {
             type="email"
             value={values.email}
             onChange={(v) => set("email", v)}
-            error={errors.email}
+            error={errors["email"]}
             maxLength={200}
             autoComplete="email"
           />
@@ -205,7 +205,7 @@ function IntakeForm() {
             type="tel"
             value={values.phone}
             onChange={(v) => set("phone", v)}
-            error={errors.phone}
+            error={errors["phone"]}
             maxLength={40}
             autoComplete="tel"
           />
@@ -214,7 +214,7 @@ function IntakeForm() {
             options={CONTACT_METHODS}
             value={values.contactMethod}
             onChange={(v) => set("contactMethod", v)}
-            error={errors.contactMethod}
+            error={errors["contactMethod"]}
             columns={2}
           />
           <RadioGroupField
@@ -222,7 +222,7 @@ function IntakeForm() {
             options={CONTACT_TIMES}
             value={values.contactTime}
             onChange={(v) => set("contactTime", v)}
-            error={errors.contactTime}
+            error={errors["contactTime"]}
             columns={2}
           />
         </SectionCard>
@@ -233,7 +233,7 @@ function IntakeForm() {
             options={CATEGORIES}
             value={values.category}
             onChange={(v) => set("category", v)}
-            error={errors.category}
+            error={errors["category"]}
           />
 
           {showLetterWords(values) ? (
@@ -242,7 +242,7 @@ function IntakeForm() {
               options={LETTER_WORDS}
               value={values.letterWords}
               onChange={(v) => set("letterWords", v)}
-              error={errors.letterWords}
+              error={errors["letterWords"]}
               columns={2}
             />
           ) : null}
@@ -254,7 +254,7 @@ function IntakeForm() {
                 options={YES_NO_NOT_SURE}
                 value={values.currentlyDetained}
                 onChange={(v) => set("currentlyDetained", v)}
-                error={errors.currentlyDetained}
+                error={errors["currentlyDetained"]}
                 columns={2}
               />
               <RadioGroupField
@@ -262,7 +262,7 @@ function IntakeForm() {
                 options={YES_NO_NOT_SURE}
                 value={values.removalDateGiven}
                 onChange={(v) => set("removalDateGiven", v)}
-                error={errors.removalDateGiven}
+                error={errors["removalDateGiven"]}
                 columns={2}
               />
             </>
@@ -275,7 +275,7 @@ function IntakeForm() {
             options={LOCATIONS}
             value={values.location}
             onChange={(v) => set("location", v)}
-            error={errors.location}
+            error={errors["location"]}
           />
         </SectionCard>
 
@@ -289,7 +289,7 @@ function IntakeForm() {
             onToggle={(option, checked) =>
               set("urgency", nextUrgencySelection(values.urgency, option, checked))
             }
-            error={errors.urgency}
+            error={errors["urgency"]}
           />
 
           {showVisaExpiryDate(values) ? (
@@ -334,7 +334,7 @@ function IntakeForm() {
               options={LETTER_DEADLINE_OPTIONS}
               value={values.letterDeadlineStated}
               onChange={(v) => set("letterDeadlineStated", v)}
-              error={errors.letterDeadlineStated}
+              error={errors["letterDeadlineStated"]}
             />
           ) : null}
 
