@@ -113,7 +113,7 @@ Permitted, UX only: required visible fields, input type/format (email, phone cha
 
 Forbidden: any expression that computes, infers, ranks or suggests CRITICAL, URGENT, PRIORITY, MANUAL_REVIEW or ROUTINE; any deadline arithmetic; any legal interpretation.
 
-
+## Mock data structure
 
 ```ts
 type Priority = "CRITICAL" | "URGENT" | "PRIORITY" | "MANUAL_REVIEW" | "ROUTINE";
