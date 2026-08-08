@@ -15,6 +15,8 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppEnquiriesIndexRouteImport } from './routes/app.enquiries.index'
 import { Route as AppEnquiriesIdRouteImport } from './routes/app.enquiries.$id'
+import { Route as IntakePublishedFormIdIndexRouteImport } from './routes/intake.$publishedFormId.index'
+import { Route as IntakePublishedFormIdSubmittedRouteImport } from './routes/intake.$publishedFormId.submitted'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,6 +48,18 @@ const AppEnquiriesIdRoute = AppEnquiriesIdRouteImport.update({
   path: '/enquiries/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const IntakePublishedFormIdIndexRoute =
+  IntakePublishedFormIdIndexRouteImport.update({
+    id: '/intake/$publishedFormId/',
+    path: '/intake/$publishedFormId/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const IntakePublishedFormIdSubmittedRoute =
+  IntakePublishedFormIdSubmittedRouteImport.update({
+    id: '/intake/$publishedFormId/submitted',
+    path: '/intake/$publishedFormId/submitted',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -53,7 +67,9 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/enquiries/$id': typeof AppEnquiriesIdRoute
+  '/intake/$publishedFormId/submitted': typeof IntakePublishedFormIdSubmittedRoute
   '/app/enquiries/': typeof AppEnquiriesIndexRoute
+  '/intake/$publishedFormId/': typeof IntakePublishedFormIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -61,7 +77,9 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/enquiries/$id': typeof AppEnquiriesIdRoute
+  '/intake/$publishedFormId/submitted': typeof IntakePublishedFormIdSubmittedRoute
   '/app/enquiries': typeof AppEnquiriesIndexRoute
+  '/intake/$publishedFormId': typeof IntakePublishedFormIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -70,7 +88,9 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/enquiries/$id': typeof AppEnquiriesIdRoute
+  '/intake/$publishedFormId/submitted': typeof IntakePublishedFormIdSubmittedRoute
   '/app/enquiries/': typeof AppEnquiriesIndexRoute
+  '/intake/$publishedFormId/': typeof IntakePublishedFormIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -80,7 +100,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/settings'
     | '/app/enquiries/$id'
+    | '/intake/$publishedFormId/submitted'
     | '/app/enquiries/'
+    | '/intake/$publishedFormId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -88,7 +110,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/settings'
     | '/app/enquiries/$id'
+    | '/intake/$publishedFormId/submitted'
     | '/app/enquiries'
+    | '/intake/$publishedFormId'
   id:
     | '__root__'
     | '/'
@@ -96,13 +120,17 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/settings'
     | '/app/enquiries/$id'
+    | '/intake/$publishedFormId/submitted'
     | '/app/enquiries/'
+    | '/intake/$publishedFormId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  IntakePublishedFormIdSubmittedRoute: typeof IntakePublishedFormIdSubmittedRoute
+  IntakePublishedFormIdIndexRoute: typeof IntakePublishedFormIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -149,6 +177,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEnquiriesIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/intake/$publishedFormId/': {
+      id: '/intake/$publishedFormId/'
+      path: '/intake/$publishedFormId'
+      fullPath: '/intake/$publishedFormId/'
+      preLoaderRoute: typeof IntakePublishedFormIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/intake/$publishedFormId/submitted': {
+      id: '/intake/$publishedFormId/submitted'
+      path: '/intake/$publishedFormId/submitted'
+      fullPath: '/intake/$publishedFormId/submitted'
+      preLoaderRoute: typeof IntakePublishedFormIdSubmittedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -170,6 +212,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  IntakePublishedFormIdSubmittedRoute: IntakePublishedFormIdSubmittedRoute,
+  IntakePublishedFormIdIndexRoute: IntakePublishedFormIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
