@@ -83,7 +83,7 @@ function EnquiryDetail() {
             <DetailField label="Location">{enquiry.location}</DetailField>
             <DetailField label="Prospect-entered dates">
               <ul className="space-y-1">
-                {enquiry.statedDates.map((d) => (
+                {enquiry.statedDates.map((d: { label: string; value: string }) => (
                   <li key={d.label}>
                     <span className="text-muted-foreground">{d.label}: </span>
                     {d.value}
