@@ -128,7 +128,7 @@ interface MockEnquiry {
   location: string;
   contactPreference: { method: string; time: string };
   statedDates: { label: string; value: string | "Not known" }[];
-  matchedRuleId: string;      // "RULE-HO-DEC-14D" placeholder
+  matchedRuleId: string;      // neutral placeholder only: "DEMO-RULE-001", "MOCK-ROUTE-001"
   acknowledgementSent: true;
   prospect: { name: string; email: string; phone: string };
   conflictCheck: { previousNames; partnerName; sponsoringEmployer; existingRepresentative };
