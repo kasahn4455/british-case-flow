@@ -79,7 +79,41 @@ Form state: `react-hook-form` + `zod` (already a shadcn-friendly pattern), singl
 This is data-entry validation only. The UI never says or implies that a legal deadline has passed or expired.
 
 
-## Mock data structure
+## Confirmation screen wording (verbatim, not paraphrased)
+
+Rendered exactly as three paragraphs, sourced from a single constant so it cannot drift:
+
+"Thank you for contacting Hamilton Immigration Solicitors. We have received your enquiry and will review the information provided.
+
+Submitting this form does not mean that Hamilton Immigration Solicitors has agreed to act for you. Please do not assume that any immigration or tribunal deadline has been protected until the firm confirms this expressly.
+
+If you believe you have an urgent deadline and have not already provided it above, please contact the firm directly and immediately."
+
+## Firm configuration — `src/lib/mock/firm.ts`
+
+One fictional config object, the single source of truth. No component hardcodes the firm name.
+
+```ts
+export const FIRM = {
+  name: "Hamilton Immigration Solicitors",
+  shortName: "Hamilton Immigration",
+  privacyPolicyUrl: "#privacy-notice-placeholder",
+  phone: "+44 20 7946 0812",
+  email: "enquiries@hamilton-immigration.example",
+  address: "12 Bedford Row, London WC1R 4BU",
+  regulatoryNote: "Fictional firm — prototype demonstration only",
+} as const;
+```
+
+Used by the intake header, the confirmation text, `/app/settings`, and the staff chrome.
+
+## Validation scope (Zod / react-hook-form)
+
+Permitted, UX only: required visible fields, input type/format (email, phone characters), max lengths, mutually exclusive selections, date input validity and the past-date confirmation.
+
+Forbidden: any expression that computes, infers, ranks or suggests CRITICAL, URGENT, PRIORITY, MANUAL_REVIEW or ROUTINE; any deadline arithmetic; any legal interpretation.
+
+
 
 ```ts
 type Priority = "CRITICAL" | "URGENT" | "PRIORITY" | "MANUAL_REVIEW" | "ROUTINE";
