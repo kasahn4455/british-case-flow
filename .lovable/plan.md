@@ -53,15 +53,65 @@ Form state: `react-hook-form` + `zod` (already a shadcn-friendly pattern), singl
 ## Conditional visibility logic (UX only)
 
 - category = refusal/decision -> "Does the letter itself mention any of these words?" (Appeal / Administrative review / Neither / Not sure)
-- category = detention/removal -> "Are you currently detained?" and "Have you been given a removal/deportation date?"
+- category = "Detention / removal enquiry" -> always show both:
+  - "Are you currently detained?" (Yes / No / Not sure)
+  - "Have you been given a removal/deportation date?" (Yes / No / Not sure); if **Yes**, run the same exact-date flow used everywhere else.
 - urgency includes "visa expires soon" -> visa expiry date flow
 - urgency includes "hearing date" -> hearing date flow
 - urgency includes "removal/deportation date" -> removal date flow
 - urgency includes "given a deadline" -> stated deadline date flow
 - category = refusal/decision **OR** urgency includes "received a Home Office decision" -> "Does your letter state a response deadline?"; if "Yes — deadline stated", run the date flow
 - Exclusivity: selecting any substantive urgency option disables "None of these" and "Not sure"; selecting either exclusive option clears and disables all others. Implemented in one reducer so the rule can't drift.
-- Date flow: "Do you know the exact date?" -> Yes reveals a date input; a past date shows the confirm prompt ("Yes, that's correct" / "No, let me fix it"). Purely a data-entry check — no deadline meaning attached.
 - Hidden answers are cleared on hide so stale values are never submitted.
+- None of these conditional answers feed any priority computation — visibility only.
+
+### Shared exact-date flow (`KnownDateField`)
+
+1. "Do you know the exact date?" — "Yes, I know the exact date" / "No / not sure".
+2. Only on **Yes** does the date input appear.
+3. If the entered date is before today, show verbatim:
+
+   "The date you entered has already passed. Is this the date you intended to enter?"
+
+   Options: "Yes, that's correct" / "No, let me fix it".
+4. "Yes, that's correct" keeps the value and dismisses the prompt. "No, let me fix it" clears the value and returns focus to the date field for re-entry.
+
+This is data-entry validation only. The UI never says or implies that a legal deadline has passed or expired.
+
+
+## Confirmation screen wording (verbatim, not paraphrased)
+
+Rendered exactly as three paragraphs, sourced from a single constant so it cannot drift:
+
+"Thank you for contacting Hamilton Immigration Solicitors. We have received your enquiry and will review the information provided.
+
+Submitting this form does not mean that Hamilton Immigration Solicitors has agreed to act for you. Please do not assume that any immigration or tribunal deadline has been protected until the firm confirms this expressly.
+
+If you believe you have an urgent deadline and have not already provided it above, please contact the firm directly and immediately."
+
+## Firm configuration — `src/lib/mock/firm.ts`
+
+One fictional config object, the single source of truth. No component hardcodes the firm name.
+
+```ts
+export const FIRM = {
+  name: "Hamilton Immigration Solicitors",
+  shortName: "Hamilton Immigration",
+  privacyPolicyUrl: "#privacy-notice-placeholder",
+  phone: "+44 20 7946 0812",
+  email: "enquiries@hamilton-immigration.example",
+  address: "12 Bedford Row, London WC1R 4BU",
+  regulatoryNote: "Fictional firm — prototype demonstration only",
+} as const;
+```
+
+Used by the intake header, the confirmation text, `/app/settings`, and the staff chrome.
+
+## Validation scope (Zod / react-hook-form)
+
+Permitted, UX only: required visible fields, input type/format (email, phone characters), max lengths, mutually exclusive selections, date input validity and the past-date confirmation.
+
+Forbidden: any expression that computes, infers, ranks or suggests CRITICAL, URGENT, PRIORITY, MANUAL_REVIEW or ROUTINE; any deadline arithmetic; any legal interpretation.
 
 ## Mock data structure
 
@@ -85,11 +135,22 @@ interface MockEnquiry {
 }
 ```
 
-~12 records covering all five priorities and a spread of categories/statuses. Summary card counts derive from counting mock rows by their stored priority — a display count, not a classification.
+~12 records covering all five priorities and a spread of categories/statuses. Every one of CRITICAL, URGENT, PRIORITY, MANUAL_REVIEW and ROUTINE is present in the fixture set and has its own badge treatment, summary card and table styling. Priorities are hardcoded fixture values; summary card counts are a simple count of rows by their stored priority — a display count, never a classification.
+
+## Staff app framing and scope
+
+- A persistent "Demo mode — fictional data only" banner sits in the `/app` layout chrome (and on `/login`), since authentication does not exist in Phase 1.
+- The enquiry detail page reserves visual space for future staff actions — a disabled action bar with a "Coming in a later phase" note. No priority override, no status mutation, no assignment change is wired up.
+- Explicitly out of scope for Phase 1: authentication, RBAC, priority override, database, Lovable Cloud, n8n, AI, backend routing, deadline calculation, email/SMS.
+
+## Routing convention
+
+Stay on the project's installed TanStack Router file-based routing. Dynamic segments use `$param` (`src/routes/intake.$publishedFormId.tsx`, `src/routes/app.enquiries.$id.tsx`); no routing library is added or swapped.
 
 ## Design
 
 Serious UK legal-software look: deep navy/slate ink, warm off-white surfaces, a single muted accent, restrained priority badge colours (critical = deep red, routine = neutral). Serif display face for headings (e.g. Source Serif) with a clean grotesk for body/UI, generous whitespace, hairline borders instead of heavy shadows, no gradients or animation beyond focus/hover states. All colours as semantic tokens in `src/styles.css`. Mobile: sections stack, dashboard table collapses to cards, 44px touch targets, visible focus rings, fieldset/legend for radio and checkbox groups.
+
 
 ## Changes I suggest to the brief
 
