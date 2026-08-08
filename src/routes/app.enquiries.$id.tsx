@@ -1,11 +1,11 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { DetailField } from "@/components/staff/DetailField";
 import { PriorityBadge } from "@/components/staff/PriorityBadge";
-import { formatReceived, getMockEnquiry } from "@/lib/mock/enquiries";
+import { formatReceived, getMockEnquiry, type MockEnquiry } from "@/lib/mock/enquiries";
 import { FIRM } from "@/lib/mock/firm";
 
 export const Route = createFileRoute("/app/enquiries/$id")({
-  loader: ({ params }) => {
+  loader: ({ params }): { enquiry: MockEnquiry } => {
     const enquiry = getMockEnquiry(params.id);
     if (!enquiry) throw notFound();
     return { enquiry };
