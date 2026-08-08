@@ -53,15 +53,31 @@ Form state: `react-hook-form` + `zod` (already a shadcn-friendly pattern), singl
 ## Conditional visibility logic (UX only)
 
 - category = refusal/decision -> "Does the letter itself mention any of these words?" (Appeal / Administrative review / Neither / Not sure)
-- category = detention/removal -> "Are you currently detained?" and "Have you been given a removal/deportation date?"
+- category = "Detention / removal enquiry" -> always show both:
+  - "Are you currently detained?" (Yes / No / Not sure)
+  - "Have you been given a removal/deportation date?" (Yes / No / Not sure); if **Yes**, run the same exact-date flow used everywhere else.
 - urgency includes "visa expires soon" -> visa expiry date flow
 - urgency includes "hearing date" -> hearing date flow
 - urgency includes "removal/deportation date" -> removal date flow
 - urgency includes "given a deadline" -> stated deadline date flow
 - category = refusal/decision **OR** urgency includes "received a Home Office decision" -> "Does your letter state a response deadline?"; if "Yes — deadline stated", run the date flow
 - Exclusivity: selecting any substantive urgency option disables "None of these" and "Not sure"; selecting either exclusive option clears and disables all others. Implemented in one reducer so the rule can't drift.
-- Date flow: "Do you know the exact date?" -> Yes reveals a date input; a past date shows the confirm prompt ("Yes, that's correct" / "No, let me fix it"). Purely a data-entry check — no deadline meaning attached.
 - Hidden answers are cleared on hide so stale values are never submitted.
+- None of these conditional answers feed any priority computation — visibility only.
+
+### Shared exact-date flow (`KnownDateField`)
+
+1. "Do you know the exact date?" — "Yes, I know the exact date" / "No / not sure".
+2. Only on **Yes** does the date input appear.
+3. If the entered date is before today, show verbatim:
+
+   "The date you entered has already passed. Is this the date you intended to enter?"
+
+   Options: "Yes, that's correct" / "No, let me fix it".
+4. "Yes, that's correct" keeps the value and dismisses the prompt. "No, let me fix it" clears the value and returns focus to the date field for re-entry.
+
+This is data-entry validation only. The UI never says or implies that a legal deadline has passed or expired.
+
 
 ## Mock data structure
 
