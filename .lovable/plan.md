@@ -135,11 +135,22 @@ interface MockEnquiry {
 }
 ```
 
-~12 records covering all five priorities and a spread of categories/statuses. Summary card counts derive from counting mock rows by their stored priority — a display count, not a classification.
+~12 records covering all five priorities and a spread of categories/statuses. Every one of CRITICAL, URGENT, PRIORITY, MANUAL_REVIEW and ROUTINE is present in the fixture set and has its own badge treatment, summary card and table styling. Priorities are hardcoded fixture values; summary card counts are a simple count of rows by their stored priority — a display count, never a classification.
+
+## Staff app framing and scope
+
+- A persistent "Demo mode — fictional data only" banner sits in the `/app` layout chrome (and on `/login`), since authentication does not exist in Phase 1.
+- The enquiry detail page reserves visual space for future staff actions — a disabled action bar with a "Coming in a later phase" note. No priority override, no status mutation, no assignment change is wired up.
+- Explicitly out of scope for Phase 1: authentication, RBAC, priority override, database, Lovable Cloud, n8n, AI, backend routing, deadline calculation, email/SMS.
+
+## Routing convention
+
+Stay on the project's installed TanStack Router file-based routing. Dynamic segments use `$param` (`src/routes/intake.$publishedFormId.tsx`, `src/routes/app.enquiries.$id.tsx`); no routing library is added or swapped.
 
 ## Design
 
 Serious UK legal-software look: deep navy/slate ink, warm off-white surfaces, a single muted accent, restrained priority badge colours (critical = deep red, routine = neutral). Serif display face for headings (e.g. Source Serif) with a clean grotesk for body/UI, generous whitespace, hairline borders instead of heavy shadows, no gradients or animation beyond focus/hover states. All colours as semantic tokens in `src/styles.css`. Mobile: sections stack, dashboard table collapses to cards, 44px touch targets, visible focus rings, fieldset/legend for radio and checkbox groups.
+
 
 ## Changes I suggest to the brief
 
