@@ -34,6 +34,12 @@ jobs:
       - name: Backend tests
         run: npm run test:backend
 
+      # TanStack's Vite plugin owns src/routeTree.gen.ts. A bare tsc run on a fresh
+      # checkout can see a stale generated tree after a route file is added, so build
+      # first to regenerate the file-route types, then run the full compiler check.
+      - name: Production build and route generation
+        run: npm run build
+
       - name: TypeScript
         run: npx tsc --noEmit
 
@@ -43,6 +49,3 @@ jobs:
           src/server/intake-v52
           'src/routes/api.intake.$publishedFormId.ts'
           tests/backend
-
-      - name: Production build
-        run: npm run build
