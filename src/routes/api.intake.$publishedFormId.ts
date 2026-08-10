@@ -92,18 +92,15 @@ export const Route = createFileRoute("/api/intake/$publishedFormId")({
 
           // Never expose internal priority, derived facts, firm_id, or matched rules
           // to the prospect.
-          return json(
-            { accepted: true, enquiryReference: result.enquiry_reference },
-            201,
-            { setCookie },
-          );
+          return json({ accepted: true, enquiryReference: result.enquiry_reference }, 201, {
+            setCookie,
+          });
         } catch (error) {
           if (error instanceof IntakeRateLimitExceededError) {
-            return json(
-              { error: "TOO_MANY_REQUESTS" },
-              429,
-              { setCookie, retryAfterSeconds: error.retryAfterSeconds },
-            );
+            return json({ error: "TOO_MANY_REQUESTS" }, 429, {
+              setCookie,
+              retryAfterSeconds: error.retryAfterSeconds,
+            });
           }
           if (error instanceof TurnstileRejectedError) {
             return json({ error: "VERIFICATION_REQUIRED" }, 403, { setCookie });
