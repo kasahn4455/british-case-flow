@@ -3,9 +3,18 @@ name: Phase 2 verification
 on:
   pull_request:
     paths:
+      - ".env.example"
       - "src/server/intake-v52/**"
       - "src/server/intake-abuse/**"
+      - "src/components/intake/TurnstileField.tsx"
+      - "src/lib/auth/**"
+      - "src/lib/enquiries/**"
+      - "src/lib/intake/canonical-submission.ts"
+      - "src/lib/mock/firm.ts"
+      - "src/routes/index.tsx"
+      - "src/routes/intake.$publishedFormId.index.tsx"
       - "src/routes/api.intake.$publishedFormId.ts"
+      - "src/start.ts"
       - "tests/backend/**"
       - "supabase/**"
       - "package.json"
@@ -49,7 +58,15 @@ jobs:
           npx eslint
           src/server/intake-v52
           src/server/intake-abuse
+          src/lib/auth
+          src/lib/enquiries
+          src/components/intake/TurnstileField.tsx
+          src/lib/intake/canonical-submission.ts
+          src/lib/mock/firm.ts
+          src/routes/index.tsx
+          'src/routes/intake.$publishedFormId.index.tsx'
           'src/routes/api.intake.$publishedFormId.ts'
+          src/start.ts
           tests/backend
 
   database:
