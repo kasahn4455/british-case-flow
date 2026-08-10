@@ -106,7 +106,11 @@ export function baseValidateSubmission(raw: unknown): BaseValidationResult {
 
   for (const field of DATE_FIELD_IDS) {
     const valueAtField = value[field];
-    if (typeof valueAtField === "string" && valueAtField !== "" && !isValidCalendarDate(valueAtField)) {
+    if (
+      typeof valueAtField === "string" &&
+      valueAtField !== "" &&
+      !isValidCalendarDate(valueAtField)
+    ) {
       issues.push(issue(field, "INVALID_DATE", "Enter a valid calendar date"));
     }
   }
