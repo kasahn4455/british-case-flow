@@ -5,6 +5,13 @@ on:
     paths:
       - "src/server/intake-v52/**"
       - "src/routes/api.intake.$publishedFormId.ts"
+      - "src/lib/auth/**"
+      - "src/lib/supabase/**"
+      - "src/server/auth/**"
+      - "src/routes/login.tsx"
+      - "src/routes/mfa.*.tsx"
+      - "src/routes/app.tsx"
+      - "src/components/staff/**"
       - "tests/backend/**"
       - "supabase/**"
       - "package.json"
@@ -31,7 +38,7 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Backend tests
+      - name: Backend and auth-state tests
         run: npm run test:backend
 
       # TanStack's Vite plugin owns src/routeTree.gen.ts. A bare tsc run on a fresh
@@ -48,6 +55,14 @@ jobs:
           npx eslint
           src/server/intake-v52
           'src/routes/api.intake.$publishedFormId.ts'
+          src/lib/auth
+          src/lib/supabase
+          src/server/auth
+          src/routes/login.tsx
+          'src/routes/mfa.setup.tsx'
+          'src/routes/mfa.challenge.tsx'
+          src/routes/app.tsx
+          src/components/staff/StaffSignOutButton.tsx
           tests/backend
 
   database:
