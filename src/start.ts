@@ -19,7 +19,8 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
 
 // Start installs this automatically when src/start.ts is absent; defining the
 // file opts out, so re-add it explicitly to keep server functions protected
-// from cross-site requests.
+// from cross-site requests. Authenticated staff mutations must use createServerFn
+// (or attach route-local CSRF middleware explicitly) rather than a bare custom POST route.
 const csrfMiddleware = createCsrfMiddleware({
   filter: (ctx) => ctx.handlerType === "serverFn",
 });
