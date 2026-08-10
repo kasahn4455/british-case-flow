@@ -69,6 +69,13 @@ export async function enforceIntakeAbuseControls(args: {
   publishedFormId: string;
   context: IntakeAbuseContext;
 }): Promise<void> {
+  // Verify the single-use challenge before consuming the durable submission quota.
+  // This prevents invalid bot traffic from exhausting a shared IP/session bucket.
+  await verifyTurnstileToken({
+    token: args.request.headers.get("x-turnstile-token"),
+    remoteIp: args.context.remoteIp,
+  });
+
   const limit = await checkIntakeRateLimits({
     publishedFormId: args.publishedFormId,
     ipHash: args.context.ipHash,
@@ -77,9 +84,4 @@ export async function enforceIntakeAbuseControls(args: {
 
   if (!limit.form_available) throw new AbuseFormNotAvailableError();
   if (!limit.allowed) throw new IntakeRateLimitExceededError(limit.retry_after_seconds);
-
-  await verifyTurnstileToken({
-    token: args.request.headers.get("x-turnstile-token"),
-    remoteIp: args.context.remoteIp,
-  });
 }
