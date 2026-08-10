@@ -63,6 +63,14 @@ jobs:
           test -d .vercel/output/functions
           test -d .vercel/output/static
 
+      - name: Upload Vercel Build Output API artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vercel-build-output
+          path: .vercel/output
+          if-no-files-found: error
+          retention-days: 1
+
       - name: TypeScript
         run: npx tsc --noEmit
 
