@@ -51,7 +51,11 @@ export function StaffActionsPanel({
   const [outcome, setOutcome] = useState("");
   const [notes, setNotes] = useState("");
 
-  async function run(action: Exclude<BusyAction, null>, task: () => Promise<unknown>, success: string) {
+  async function run(
+    action: Exclude<BusyAction, null>,
+    task: () => Promise<unknown>,
+    success: string,
+  ): Promise<boolean> {
     setBusy(action);
     setError("");
     setMessage("");
@@ -59,16 +63,23 @@ export function StaffActionsPanel({
       await task();
       setMessage(success);
       await router.invalidate();
+      return true;
     } catch (caught) {
       console.error(caught);
-      setError("The action could not be completed. Your access or the enquiry state may have changed.");
+      setError(
+        "The action could not be completed. Your access or the enquiry state may have changed.",
+      );
+      return false;
     } finally {
       setBusy(null);
     }
   }
 
   return (
-    <section aria-label="Staff actions" className="rounded-md border border-border bg-card px-5 py-5">
+    <section
+      aria-label="Staff actions"
+      className="rounded-md border border-border bg-card px-5 py-5"
+    >
       <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">
         Staff actions
       </h2>
@@ -78,12 +89,18 @@ export function StaffActionsPanel({
       </p>
 
       {error ? (
-        <p role="alert" className="mt-4 rounded-md border border-destructive/40 px-3 py-2 text-sm text-destructive">
+        <p
+          role="alert"
+          className="mt-4 rounded-md border border-destructive/40 px-3 py-2 text-sm text-destructive"
+        >
           {error}
         </p>
       ) : null}
       {message ? (
-        <p role="status" className="mt-4 rounded-md border border-border bg-surface px-3 py-2 text-sm">
+        <p
+          role="status"
+          className="mt-4 rounded-md border border-border bg-surface px-3 py-2 text-sm"
+        >
           {message}
         </p>
       ) : null}
@@ -165,18 +182,21 @@ export function StaffActionsPanel({
           onSubmit={(event) => {
             event.preventDefault();
             if (priority === currentPriority || priorityReason.trim().length < 10) return;
-            void run(
-              "priority",
-              () =>
-                overrideEnquiryPriority({
-                  data: {
-                    publicReference,
-                    newPriority: priority,
-                    reason: priorityReason.trim(),
-                  },
-                }),
-              "Priority override recorded.",
-            );
+            void (async () => {
+              const succeeded = await run(
+                "priority",
+                () =>
+                  overrideEnquiryPriority({
+                    data: {
+                      publicReference,
+                      newPriority: priority,
+                      reason: priorityReason.trim(),
+                    },
+                  }),
+                "Priority override recorded.",
+              );
+              if (succeeded) setPriorityReason("");
+            })();
           }}
         >
           <label className="block text-sm font-semibold" htmlFor="staff-priority">
@@ -195,7 +215,10 @@ export function StaffActionsPanel({
               </option>
             ))}
           </select>
-          <label className="block text-xs font-semibold text-muted-foreground" htmlFor="priority-reason">
+          <label
+            className="block text-xs font-semibold text-muted-foreground"
+            htmlFor="priority-reason"
+          >
             Reason (minimum 10 characters)
           </label>
           <textarea
@@ -223,23 +246,26 @@ export function StaffActionsPanel({
           onSubmit={(event) => {
             event.preventDefault();
             if (!outcome.trim()) return;
-            void run(
-              "contact",
-              () =>
-                logEnquiryContact({
-                  data: {
-                    publicReference,
-                    channel,
-                    direction,
-                    outcome: outcome.trim(),
-                    ...(notes.trim() ? { notes: notes.trim() } : {}),
-                  },
-                }),
-              "Contact log recorded.",
-            ).then(() => {
-              setOutcome("");
-              setNotes("");
-            });
+            void (async () => {
+              const succeeded = await run(
+                "contact",
+                () =>
+                  logEnquiryContact({
+                    data: {
+                      publicReference,
+                      channel,
+                      direction,
+                      outcome: outcome.trim(),
+                      ...(notes.trim() ? { notes: notes.trim() } : {}),
+                    },
+                  }),
+                "Contact log recorded.",
+              );
+              if (succeeded) {
+                setOutcome("");
+                setNotes("");
+              }
+            })();
           }}
         >
           <h3 className="text-sm font-semibold">Log contact</h3>
