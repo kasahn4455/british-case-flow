@@ -2,8 +2,10 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   PRIORITY_ORDER,
   emptyPriorityCounts,
+  mapContactLogRow,
   mapEnquiryDetailRow,
   mapEnquirySummaryRow,
+  type ContactLogRow,
   type EnquiryDetailRow,
   type EnquirySummaryRow,
   type LiveEnquiryDetail,
@@ -24,6 +26,7 @@ const SUMMARY_SELECT = [
 ].join(",");
 
 const DETAIL_SELECT = [
+  "id",
   SUMMARY_SELECT,
   "full_name",
   "email",
@@ -92,7 +95,24 @@ export async function readEnquiryDetailForFirm(
 
   if (error) throw error;
   if (!data) return null;
-  return mapEnquiryDetailRow(data as unknown as EnquiryDetailRow);
+
+  const row = data as unknown as EnquiryDetailRow;
+  if (!row.id) throw new Error("Enquiry detail is missing its internal identifier");
+
+  const { data: contactData, error: contactError } = await supabase
+    .from("contact_logs")
+    .select("id,channel,direction,outcome,notes,contacted_at")
+    .eq("firm_id", firmId)
+    .eq("enquiry_id", row.id)
+    .order("contacted_at", { ascending: false })
+    .limit(20);
+
+  if (contactError) throw contactError;
+
+  return {
+    ...mapEnquiryDetailRow(row),
+    contactHistory: ((contactData ?? []) as unknown as ContactLogRow[]).map(mapContactLogRow),
+  };
 }
 
 export async function resolveEnquiryIdForFirm(
