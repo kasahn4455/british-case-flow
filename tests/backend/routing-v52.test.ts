@@ -5,7 +5,11 @@ import type {
   CanonicalIntakeSubmission,
   DerivedFacts,
 } from "../../src/server/intake-v52/contracts.ts";
-import { evaluateCondition, routeSubmission } from "../../src/server/intake-v52/routing.ts";
+import {
+  evaluateCondition,
+  routeSubmission,
+  ROUTING_RULES_V52,
+} from "../../src/server/intake-v52/routing.ts";
 
 const NOW = new Date("2026-08-10T12:00:00Z");
 
@@ -39,6 +43,56 @@ function derived(overrides: Partial<DerivedFacts> = {}): DerivedFacts {
     ...overrides,
   };
 }
+
+test("routing rule inventory exactly matches frozen v5.2", () => {
+  assert.deepEqual(
+    ROUTING_RULES_V52.map((rule) => rule.rule_id),
+    [
+      "CRITICAL_DETAINED",
+      "CRITICAL_REMOVAL_DATE",
+      "CRITICAL_PAST_DATE_CONFIRMED",
+      "CRITICAL_DATE_RANGE",
+      "URGENT_DATE_RANGE",
+      "URGENT_DECISION_NO_DEADLINE",
+      "PRIORITY_DATE_RANGE",
+      "MANUAL_NOT_SURE_URGENCY",
+      "MANUAL_NOT_SURE_DECISION_DEADLINE",
+      "MANUAL_NOT_SURE_CATEGORY",
+      "MANUAL_NOT_SURE_LETTER",
+      "MANUAL_DATE_UNKNOWN",
+      "MANUAL_DETENTION_UNRESOLVED",
+      "MANUAL_LOCATION_UNCERTAIN",
+      "ROUTINE_FALLBACK",
+    ],
+  );
+});
+
+test("manual review rules cover letter, unknown date and unresolved detention", () => {
+  const letter = routeSubmission(
+    baseSubmission({ letter_mentions: "Not sure" }),
+    derived(),
+    NOW,
+  );
+  assert(letter.matched_rule_ids.includes("MANUAL_NOT_SURE_LETTER"));
+
+  const dateUnknown = routeSubmission(
+    baseSubmission({ hearing_date_value_known: "No / not sure" }),
+    derived(),
+    NOW,
+  );
+  assert(dateUnknown.matched_rule_ids.includes("MANUAL_DATE_UNKNOWN"));
+
+  const detention = routeSubmission(
+    baseSubmission({
+      category: "Detention / removal enquiry",
+      currently_detained: "No",
+      removal_date_given: "No",
+    }),
+    derived({ detention_category_unresolved: true }),
+    NOW,
+  );
+  assert(detention.matched_rule_ids.includes("MANUAL_DETENTION_UNRESOLVED"));
+});
 
 test("ROUTINE fallback for fully certain non-urgent facts", () => {
   const result = routeSubmission(baseSubmission(), derived(), NOW);
