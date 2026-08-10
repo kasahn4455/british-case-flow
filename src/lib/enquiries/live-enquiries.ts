@@ -1,5 +1,10 @@
 export type Priority = "CRITICAL" | "URGENT" | "PRIORITY" | "MANUAL_REVIEW" | "ROUTINE";
-export type DatabaseEnquiryStatus = "NEW" | "IN_REVIEW" | "CONTACTED" | "AWAITING_CLIENT" | "CLOSED";
+export type DatabaseEnquiryStatus =
+  | "NEW"
+  | "IN_REVIEW"
+  | "CONTACTED"
+  | "AWAITING_CLIENT"
+  | "CLOSED";
 export type PriorityCounts = Record<Priority, number>;
 
 export const PRIORITY_ORDER: Priority[] = [
@@ -135,7 +140,9 @@ export function mapEnquirySummaryRow(row: EnquirySummaryRow): LiveEnquirySummary
   };
 }
 
-export function extractProspectStatedDates(intakeAnswers: unknown): { label: string; value: string }[] {
+export function extractProspectStatedDates(
+  intakeAnswers: unknown,
+): { label: string; value: string }[] {
   const answers = asRecord(intakeAnswers);
   const fields = [
     ["Visa/permission expiry", "visa_expiry_date_known", "visa_expiry_date"],
