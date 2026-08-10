@@ -33,9 +33,19 @@ export interface LiveEnquirySummary {
   priority: Priority;
   category: string;
   status: string;
+  statusCode: DatabaseEnquiryStatus;
   assignedTo: string | null;
   location: string;
   contactPreference: { method: string; time: string };
+}
+
+export interface LiveContactLog {
+  id: string;
+  channel: "PHONE" | "EMAIL" | "SMS" | "OTHER";
+  direction: "INBOUND" | "OUTBOUND";
+  outcome: string;
+  notes: string | null;
+  contactedAt: string;
 }
 
 export interface LiveEnquiryDetail extends LiveEnquirySummary {
@@ -43,6 +53,7 @@ export interface LiveEnquiryDetail extends LiveEnquirySummary {
   matchedRuleIds: string[];
   conflictCheckState: string;
   statedDates: { label: string; value: string }[];
+  contactHistory: LiveContactLog[];
   prospect: { name: string; email: string; phone: string };
   conflictCheck: {
     previousNames: string;
@@ -65,6 +76,7 @@ export type EnquirySummaryRow = {
 };
 
 export type EnquiryDetailRow = EnquirySummaryRow & {
+  id?: string;
   full_name: string;
   email: string;
   phone: string;
@@ -72,6 +84,15 @@ export type EnquiryDetailRow = EnquirySummaryRow & {
   priority_reason: string;
   matched_rule_ids: string[] | null;
   conflict_check_state: string;
+};
+
+export type ContactLogRow = {
+  id: string;
+  channel: "PHONE" | "EMAIL" | "SMS" | "OTHER";
+  direction: "INBOUND" | "OUTBOUND";
+  outcome: string;
+  notes: string | null;
+  contacted_at: string;
 };
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -127,6 +148,7 @@ export function mapEnquirySummaryRow(row: EnquirySummaryRow): LiveEnquirySummary
     priority: row.priority,
     category: row.category,
     status: STATUS_LABELS[row.status],
+    statusCode: row.status,
     assignedTo: row.assigned_staff_membership_id ? "Assigned staff member" : null,
     location: row.location_status,
     contactPreference: {
@@ -160,6 +182,17 @@ export function extractProspectStatedDates(
   });
 }
 
+export function mapContactLogRow(row: ContactLogRow): LiveContactLog {
+  return {
+    id: row.id,
+    channel: row.channel,
+    direction: row.direction,
+    outcome: row.outcome,
+    notes: row.notes,
+    contactedAt: row.contacted_at,
+  };
+}
+
 export function mapEnquiryDetailRow(row: EnquiryDetailRow): LiveEnquiryDetail {
   const answers = asRecord(row.intake_answers);
   return {
@@ -168,6 +201,7 @@ export function mapEnquiryDetailRow(row: EnquiryDetailRow): LiveEnquiryDetail {
     matchedRuleIds: row.matched_rule_ids ?? [],
     conflictCheckState: row.conflict_check_state,
     statedDates: extractProspectStatedDates(row.intake_answers),
+    contactHistory: [],
     prospect: {
       name: row.full_name,
       email: row.email,
