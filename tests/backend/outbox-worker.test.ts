@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { isAuthorizedWorkerRequest } from "../../src/server/outbox-worker/auth.ts";
-import { deliverOutboxEvent, OutboxDeliveryError } from "../../src/server/outbox-worker/delivery.ts";
+import {
+  deliverOutboxEvent,
+  OutboxDeliveryError,
+} from "../../src/server/outbox-worker/delivery.ts";
 
 const WORKER_TOKEN = "worker-token-abcdefghijklmnopqrstuvwxyz-123456";
 const DELIVERY_TOKEN = "delivery-token-abcdefghijklmnopqrstuvwxyz";
