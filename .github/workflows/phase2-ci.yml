@@ -7,6 +7,7 @@ on:
       - "src/server/intake-v52/**"
       - "src/server/intake-abuse/**"
       - "src/components/intake/TurnstileField.tsx"
+      - "src/components/staff/**"
       - "src/lib/auth/**"
       - "src/lib/enquiries/**"
       - "src/lib/intake/canonical-submission.ts"
@@ -14,6 +15,8 @@ on:
       - "src/routes/index.tsx"
       - "src/routes/intake.$publishedFormId.index.tsx"
       - "src/routes/api.intake.$publishedFormId.ts"
+      - "src/routes/app.enquiries.index.tsx"
+      - "src/routes/app.enquiries.$id.tsx"
       - "src/start.ts"
       - "tests/backend/**"
       - "supabase/**"
@@ -61,11 +64,14 @@ jobs:
           src/lib/auth
           src/lib/enquiries
           src/components/intake/TurnstileField.tsx
+          src/components/staff
           src/lib/intake/canonical-submission.ts
           src/lib/mock/firm.ts
           src/routes/index.tsx
           'src/routes/intake.$publishedFormId.index.tsx'
           'src/routes/api.intake.$publishedFormId.ts'
+          src/routes/app.enquiries.index.tsx
+          'src/routes/app.enquiries.$id.tsx'
           src/start.ts
           tests/backend
 
