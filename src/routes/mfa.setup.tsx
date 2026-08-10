@@ -45,17 +45,10 @@ function MfaSetupPage() {
       const { data: factorData, error: factorsError } = await supabase.auth.mfa.listFactors();
       if (factorsError) throw factorsError;
 
-      const verified = (factorData.totp ?? []).find((factor) => factor.status === "verified");
+      const verified = (factorData.totp ?? [])[0];
       if (verified) {
         navigate({ to: "/mfa/challenge" });
         return;
-      }
-
-      // Clean up abandoned unverified TOTP factors before creating a fresh QR code.
-      for (const factor of factorData.totp ?? []) {
-        if (factor.status !== "unverified") continue;
-        const { error: cleanupError } = await supabase.auth.mfa.unenroll({ factorId: factor.id });
-        if (cleanupError) throw cleanupError;
       }
 
       const { data, error: enrollError } = await supabase.auth.mfa.enroll({
