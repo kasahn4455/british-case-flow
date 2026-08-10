@@ -1,10 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import {
-  getStaffDestination,
-  type StaffAuthState,
-} from "../../src/lib/auth/staff-auth-state.ts";
+import { getStaffDestination, type StaffAuthState } from "../../src/lib/auth/staff-auth-state.ts";
 
 function staff(overrides: Partial<Extract<StaffAuthState, { kind: "staff" }>> = {}) {
   return {
@@ -41,9 +38,7 @@ test("aal1 staff with no verified TOTP factor must enroll", () => {
 
 test("aal1 staff with verified TOTP factor must challenge", () => {
   assert.equal(
-    getStaffDestination(
-      staff({ nextLevel: "aal2", verifiedTotpFactorIds: ["factor-1"] }),
-    ),
+    getStaffDestination(staff({ nextLevel: "aal2", verifiedTotpFactorIds: ["factor-1"] })),
     "/mfa/challenge",
   );
 });
