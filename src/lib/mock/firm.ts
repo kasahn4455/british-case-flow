@@ -1,11 +1,12 @@
 /**
- * Fictional firm configuration for the Phase 1 prototype.
+ * Fictional firm configuration for the prototype/demo environment.
  * Single source of truth — never hardcode the firm name in components.
  */
 export const FIRM = {
   name: "Hamilton Immigration Solicitors",
   shortName: "Hamilton Immigration",
   privacyPolicyUrl: "#privacy-notice-placeholder",
+  privacyNoticeVersion: "demo-v1",
   phone: "+44 20 7946 0812",
   email: "enquiries@hamilton-immigration.example",
   address: "12 Bedford Row, London WC1R 4BU",
