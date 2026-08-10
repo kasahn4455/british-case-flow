@@ -2,6 +2,7 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { TextField } from "@/components/intake/TextField";
+import { getStaffAuthState } from "@/lib/auth/staff-auth.functions";
 import {
   getStaffDestination,
   type StaffDestination,
@@ -11,7 +12,6 @@ import {
   StaffAuthConfigurationError,
 } from "@/lib/supabase/client";
 import { FIRM } from "@/lib/mock/firm";
-import { getStaffAuthState } from "@/server/auth/staff-auth.server";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
