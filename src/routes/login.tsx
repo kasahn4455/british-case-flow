@@ -3,14 +3,8 @@ import { useState } from "react";
 
 import { TextField } from "@/components/intake/TextField";
 import { getStaffAuthState } from "@/lib/auth/staff-auth.functions";
-import {
-  getStaffDestination,
-  type StaffDestination,
-} from "@/lib/auth/staff-auth-state";
-import {
-  createSupabaseBrowserClient,
-  StaffAuthConfigurationError,
-} from "@/lib/supabase/client";
+import { getStaffDestination, type StaffDestination } from "@/lib/auth/staff-auth-state";
+import { createSupabaseBrowserClient, StaffAuthConfigurationError } from "@/lib/supabase/client";
 import { FIRM } from "@/lib/mock/firm";
 
 export const Route = createFileRoute("/login")({
@@ -61,19 +55,25 @@ function LoginPage() {
           </p>
           <h1 className="mt-1 font-serif text-2xl font-semibold text-foreground">Staff sign in</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            Staff accounts are provisioned by the firm. Multi-factor authentication is required before
-            enquiry access.
+            Staff accounts are provisioned by the firm. Multi-factor authentication is required
+            before enquiry access.
           </p>
 
           {notConfigured ? (
-            <p role="alert" className="mt-4 rounded-md border border-border bg-surface px-3 py-3 text-sm">
+            <p
+              role="alert"
+              className="mt-4 rounded-md border border-border bg-surface px-3 py-3 text-sm"
+            >
               Staff authentication is not configured in this environment. No credentials will be
               submitted.
             </p>
           ) : null}
 
           {error ? (
-            <p role="alert" className="mt-4 rounded-md border border-destructive/40 bg-card px-3 py-3 text-sm text-destructive">
+            <p
+              role="alert"
+              className="mt-4 rounded-md border border-destructive/40 bg-card px-3 py-3 text-sm text-destructive"
+            >
               {error}
             </p>
           ) : null}
