@@ -67,7 +67,10 @@ async function rpc(rpcName: string, body: Record<string, unknown>): Promise<unkn
   return text ? (JSON.parse(text) as unknown) : null;
 }
 
-export async function claimOutboxEvents(workerId: string, limit = 25): Promise<ClaimedOutboxEvent[]> {
+export async function claimOutboxEvents(
+  workerId: string,
+  limit = 25,
+): Promise<ClaimedOutboxEvent[]> {
   const raw = await rpc("claim_outbox_events", {
     p_worker_id: workerId,
     p_limit: limit,
