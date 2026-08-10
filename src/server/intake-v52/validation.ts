@@ -24,7 +24,12 @@ const submissionSchema = z
   .object({
     full_name: z.string().trim().min(1).max(150),
     email: z.string().trim().email().max(254),
-    phone: z.string().trim().min(6).max(20).regex(/^[0-9+()\s-]+$/),
+    phone: z
+      .string()
+      .trim()
+      .min(6)
+      .max(20)
+      .regex(/^[0-9+()\s-]+$/),
     preferred_contact_method: z.enum(CONTACT_METHODS),
     preferred_contact_time: z.enum(CONTACT_TIMES).optional(),
 
@@ -67,9 +72,10 @@ function issue(field: string, code: string, message: string): ValidationIssue {
   return { field, code, message };
 }
 
-export type BaseValidationResult =
-  | { ok: true; value: CanonicalIntakeSubmission }
-  | { ok: false; issues: ValidationIssue[] };
+export type BaseValidationResult = { ok: true; value: CanonicalIntakeSubmission } | {
+  ok: false;
+  issues: ValidationIssue[];
+};
 
 export function baseValidateSubmission(raw: unknown): BaseValidationResult {
   const parsed = submissionSchema.safeParse(raw);
