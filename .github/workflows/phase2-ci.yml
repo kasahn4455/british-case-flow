@@ -6,6 +6,7 @@ on:
       - ".env.example"
       - "src/server/intake-v52/**"
       - "src/server/intake-abuse/**"
+      - "src/server/outbox-worker/**"
       - "src/components/intake/TurnstileField.tsx"
       - "src/components/staff/**"
       - "src/lib/auth/**"
@@ -15,6 +16,7 @@ on:
       - "src/routes/index.tsx"
       - "src/routes/intake.$publishedFormId.index.tsx"
       - "src/routes/api.intake.$publishedFormId.ts"
+      - "src/routes/api.workers.*.ts"
       - "src/routes/app.enquiries.index.tsx"
       - "src/routes/app.enquiries.$id.tsx"
       - "src/start.ts"
@@ -61,6 +63,7 @@ jobs:
           npx eslint
           src/server/intake-v52
           src/server/intake-abuse
+          src/server/outbox-worker
           src/lib/auth
           src/lib/enquiries
           src/components/intake/TurnstileField.tsx
@@ -70,6 +73,8 @@ jobs:
           src/routes/index.tsx
           'src/routes/intake.$publishedFormId.index.tsx'
           'src/routes/api.intake.$publishedFormId.ts'
+          src/routes/api.workers.outbox.ts
+          src/routes/api.workers.maintenance.ts
           src/routes/app.enquiries.index.tsx
           'src/routes/app.enquiries.$id.tsx'
           src/start.ts
