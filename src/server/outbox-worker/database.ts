@@ -17,7 +17,7 @@ const claimedEventSchema = z.object({
 const claimedEventsSchema = z.array(claimedEventSchema);
 const cleanupSchema = z.object({
   rate_limit_windows_deleted: z.number().int().nonnegative(),
-  security_events_deleted: z.number().int().nonnegative(),
+  security_event_retention_deferred: z.literal(true),
 });
 
 export type ClaimedOutboxEvent = z.infer<typeof claimedEventSchema>;
