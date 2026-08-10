@@ -16,7 +16,8 @@ The browser is no longer authoritative. The public demo form maps UI values into
 8. Stage 5 chooses the highest severity: `CRITICAL > URGENT > PRIORITY > MANUAL_REVIEW > ROUTINE`.
 9. One Postgres RPC persists the submission snapshot, enquiry, routing result, audit event and both outbox events atomically.
 10. Staff access is Supabase Auth backed and requires an active firm membership plus AAL2 before `/app` is available.
-11. Staff mutations must use TanStack server functions (or explicit route-local CSRF middleware); the priority-override broker uses a server function.
+11. Staff list/detail reads use TanStack server functions, derive the firm from the verified staff session, and additionally scope every enquiry query by that firm ID while database RLS remains authoritative.
+12. Staff mutations must use TanStack server functions (or explicit route-local CSRF middleware); the priority-override broker uses a server function.
 
 ## Key server modules
 
@@ -29,6 +30,8 @@ The browser is no longer authoritative. The public demo form maps UI values into
 - `src/server/intake-abuse/**` — Turnstile, pseudonymous identity and durable rate-limit enforcement.
 - `src/routes/api.intake.$publishedFormId.ts` — public submission endpoint; never returns internal priority/rules.
 - `src/lib/auth/staff-auth.server.ts` — authenticated user, membership and MFA state.
+- `src/lib/enquiries/live-enquiries.functions.ts` — AAL2 server-function read boundary for queue/detail.
+- `src/lib/enquiries/live-enquiries.server.ts` — explicit firm-scoped Supabase reads under the staff session.
 - `src/lib/enquiries/priority-override.functions.ts` — CSRF-protected staff override entry point.
 - `src/lib/enquiries/priority-override.server.ts` — server-only service-role RPC broker.
 
@@ -59,7 +62,8 @@ Core tables include:
 - RLS is enabled on every public table.
 - The `anon` role gets no direct enquiry-table access.
 - Public intake cannot directly insert into database tables.
-- Enquiry access requires active same-firm membership and AAL2.
+- Enquiry and routing-result SELECT requires active same-firm membership and AAL2.
+- The application also applies the authenticated staff `firmId` as an explicit filter; browser input never selects the tenant.
 - Direct authenticated writes to enquiries are intentionally not granted.
 - Assigned staff membership is constrained to the same firm as the enquiry.
 - The atomic intake RPC re-resolves the active form/configuration and verifies the submitted privacy-notice version/URL.
@@ -107,9 +111,16 @@ See `docs/phase2-abuse-controls.md` for deployment details.
 
 ## Staff workspace state
 
-Authentication and MFA are real. The enquiry list/detail UI is **not** real-data-backed yet: `app.enquiries.index.tsx` and `app.enquiries.$id.tsx` still use `MOCK_ENQUIRIES` and remain explicitly labelled as fictional fixture data. No claim should be made that authenticated staff are currently viewing live enquiries.
+Authentication and MFA are real. The enquiry list and detail routes are now real-data-backed:
 
-Replacing those fixtures with tenant-scoped server reads from `enquiries`/`routing_results` is the next application-layer task.
+- `/app/enquiries` loads up to the latest 200 tenant-scoped enquiry summaries and exact per-priority counts.
+- `/app/enquiries/:reference` loads a single tenant-scoped record by public reference.
+- Both reads independently require an AAL2 staff session and derive `firmId` from active membership.
+- Postgres RLS separately requires AAL2 + same-firm access, so a foreign reference returns no row even if requested explicitly.
+- The detail view shows stored server priority/reason/rule IDs plus prospect-entered contact, conflict and date facts. It does not calculate deadlines.
+- Assigned-user display is intentionally generic until a separate staff-profile/name model exists; auth-table identity is not exposed to ordinary staff reads.
+
+The old `MOCK_ENQUIRIES` fixture file may remain for isolated design/test use, but the authenticated enquiry routes and staff components no longer depend on it.
 
 ## Environment
 
@@ -119,22 +130,26 @@ Real values are intentionally absent from GitHub. Required deployment configurat
 
 GitHub Actions runs:
 
-- Node backend/contract tests
+- Node backend/contract/dashboard mapping tests
 - production build and TanStack route generation
 - full TypeScript check
-- targeted lint including public-form wiring and server-only code
+- targeted lint including public form, staff dashboard and server-only code
 - clean disposable Supabase startup and all migrations
 - Postgres function lint
 - pgTAP database integration tests
 
-Database tests include the service-role priority-override execution path so a future function cannot silently depend on absent user JWT claims again.
+Database tests include:
+
+- the service-role priority-override execution path so a future function cannot silently depend on absent user JWT claims again;
+- AAL2 tenant isolation proving staff can read their own firm's enquiries/routing rows but cannot enumerate another firm's records;
+- AAL1 denial for enquiry reads.
 
 ## Current limitations / remaining production gates
 
 - The public tenant/form is still explicitly fictional/demo-only.
 - Real deployment secrets must be configured on the hosting platform and manually exercised end-to-end.
 - A real staff Auth account must be provisioned and TOTP enrolment/challenge verified in the deployed app.
-- The staff enquiry list/detail screens still use `MOCK_ENQUIRIES`; real tenant-scoped reads are the next application task.
+- Staff mutation UI for assignment/status/priority/contact logging is not yet exposed even though the audited priority-override backend exists.
 - Outbox/security-event delivery workers are not implemented.
 - Retention/deletion and old rate-limit-window cleanup jobs are not implemented.
 - Production privacy/compliance/security sign-off is still required before accepting real client information.
