@@ -1,4 +1,9 @@
-import { countByPriority, PRIORITY_LABELS, PRIORITY_ORDER, type Priority } from "@/lib/mock/enquiries";
+import {
+  PRIORITY_LABELS,
+  PRIORITY_ORDER,
+  type Priority,
+  type PriorityCounts,
+} from "@/lib/enquiries/live-enquiries";
 
 const ACCENTS: Record<Priority, string> = {
   CRITICAL: "border-t-critical-foreground/70",
@@ -8,9 +13,7 @@ const ACCENTS: Record<Priority, string> = {
   ROUTINE: "border-t-routine-foreground/60",
 };
 
-export function SummaryCards() {
-  const counts = countByPriority();
-
+export function SummaryCards({ counts }: { counts: PriorityCounts }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       {PRIORITY_ORDER.map((priority) => (
