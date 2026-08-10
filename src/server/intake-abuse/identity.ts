@@ -21,8 +21,12 @@ export function readIntakeSessionId(cookieHeader: string | null): string | null 
   for (const part of cookieHeader.split(";")) {
     const [rawName, ...rawValue] = part.trim().split("=");
     if (rawName !== SESSION_COOKIE_NAME) continue;
-    const value = decodeURIComponent(rawValue.join("="));
-    return UUID_RE.test(value) ? value : null;
+    try {
+      const value = decodeURIComponent(rawValue.join("="));
+      return UUID_RE.test(value) ? value : null;
+    } catch {
+      return null;
+    }
   }
   return null;
 }
