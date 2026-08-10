@@ -211,7 +211,9 @@ function IntakeForm() {
       } else if (response.status === 404) {
         setSubmissionError("This enquiry form is not currently available.");
       } else if (response.status === 422) {
-        setSubmissionError("Some information could not be accepted. Review the form and try again.");
+        setSubmissionError(
+          "Some information could not be accepted. Review the form and try again.",
+        );
       } else if (response.status === 429) {
         setSubmissionError("Too many submission attempts. Please wait before trying again.");
       } else if (response.status === 503) {
@@ -221,7 +223,9 @@ function IntakeForm() {
       }
     } catch {
       setTurnstileResetKey((value) => value + 1);
-      setSubmissionError("The enquiry could not be submitted. Check your connection and try again.");
+      setSubmissionError(
+        "The enquiry could not be submitted. Check your connection and try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -240,7 +244,10 @@ function IntakeForm() {
       </p>
 
       <form onSubmit={handleSubmit} noValidate className="mt-8 space-y-6">
-        <div className="absolute left-[-10000px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
+        <div
+          className="absolute left-[-10000px] top-auto h-px w-px overflow-hidden"
+          aria-hidden="true"
+        >
           <label htmlFor="website">Website</label>
           <input
             id="website"
@@ -259,10 +266,7 @@ function IntakeForm() {
               This enquiry form is provided by <strong>{FIRM.name}</strong>.
             </p>
             <p>
-              <a
-                href={FIRM.privacyPolicyUrl}
-                className="font-medium underline underline-offset-4"
-              >
+              <a href={FIRM.privacyPolicyUrl} className="font-medium underline underline-offset-4">
                 Privacy Notice
               </a>{" "}
               <span className="text-muted-foreground">(placeholder link)</span>
