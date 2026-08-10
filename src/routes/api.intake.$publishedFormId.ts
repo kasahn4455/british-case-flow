@@ -109,9 +109,14 @@ export const Route = createFileRoute("/api/intake/$publishedFormId")({
             return json({ error: "VERIFICATION_REQUIRED" }, 403, { setCookie });
           }
           if (error instanceof SubmissionValidationError) {
-            return json({ error: "INVALID_SUBMISSION", issues: error.issues }, 422, { setCookie });
+            return json({ error: "INVALID_SUBMISSION", issues: error.issues }, 422, {
+              setCookie,
+            });
           }
-          if (error instanceof AbuseFormNotAvailableError || error instanceof PublishedFormNotFoundError) {
+          if (
+            error instanceof AbuseFormNotAvailableError ||
+            error instanceof PublishedFormNotFoundError
+          ) {
             return json({ error: "FORM_NOT_AVAILABLE" }, 404, { setCookie });
           }
           if (
@@ -123,11 +128,15 @@ export const Route = createFileRoute("/api/intake/$publishedFormId")({
             error instanceof BackendConfigurationError
           ) {
             console.error(error.message);
-            return json({ error: "SUBMISSION_TEMPORARILY_UNAVAILABLE" }, 503, { setCookie });
+            return json({ error: "SUBMISSION_TEMPORARILY_UNAVAILABLE" }, 503, {
+              setCookie,
+            });
           }
           if (error instanceof AbuseDatabaseError || error instanceof BackendPersistenceError) {
             console.error(error.message);
-            return json({ error: "SUBMISSION_TEMPORARILY_UNAVAILABLE" }, 503, { setCookie });
+            return json({ error: "SUBMISSION_TEMPORARILY_UNAVAILABLE" }, 503, {
+              setCookie,
+            });
           }
 
           console.error(error);
