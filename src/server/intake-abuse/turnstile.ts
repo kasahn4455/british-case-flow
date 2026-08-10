@@ -50,10 +50,13 @@ export function getTurnstileConfig(): TurnstileConfig {
   const env = runtimeEnv();
   const secretKey = env["TURNSTILE_SECRET_KEY"]?.trim();
   if (!secretKey) throw new TurnstileConfigurationError();
+
+  const expectedAction = env["TURNSTILE_EXPECTED_ACTION"]?.trim();
+  const expectedHostname = env["TURNSTILE_EXPECTED_HOSTNAME"]?.trim();
   return {
     secretKey,
-    expectedAction: env["TURNSTILE_EXPECTED_ACTION"]?.trim() || undefined,
-    expectedHostname: env["TURNSTILE_EXPECTED_HOSTNAME"]?.trim() || undefined,
+    ...(expectedAction ? { expectedAction } : {}),
+    ...(expectedHostname ? { expectedHostname } : {}),
   };
 }
 
