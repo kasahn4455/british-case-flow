@@ -1,12 +1,5 @@
-import type {
-  AuthenticatorLevel,
-  StaffAuthState,
-  StaffRole,
-} from "./staff-auth-state";
-import {
-  createSupabaseServerClient,
-  StaffAuthServerConfigurationError,
-} from "../supabase/server";
+import type { AuthenticatorLevel, StaffAuthState, StaffRole } from "./staff-auth-state";
+import { createSupabaseServerClient, StaffAuthServerConfigurationError } from "../supabase/server";
 
 function normalizeAuthenticatorLevel(value: unknown): AuthenticatorLevel {
   return value === "aal1" || value === "aal2" ? value : null;
