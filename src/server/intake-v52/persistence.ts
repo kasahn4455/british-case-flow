@@ -27,11 +27,12 @@ export class BackendPersistenceError extends Error {
 }
 
 function getBackendEnv() {
-  const runtimeEnv = (
-    globalThis as typeof globalThis & {
-      process?: { env?: Record<string, string | undefined> };
-    }
-  ).process?.env ?? {};
+  const runtimeEnv =
+    (
+      globalThis as typeof globalThis & {
+        process?: { env?: Record<string, string | undefined> };
+      }
+    ).process?.env ?? {};
   const parsed = envSchema.safeParse(runtimeEnv);
   if (!parsed.success) throw new BackendConfigurationError();
   return parsed.data;
@@ -102,9 +103,7 @@ export async function persistSubmissionAtomically(args: {
     );
   }
 
-  const result = (await response.json()) as
-    | PersistedSubmissionResult
-    | PersistedSubmissionResult[];
+  const result = (await response.json()) as PersistedSubmissionResult | PersistedSubmissionResult[];
   const normalized = Array.isArray(result) ? result[0] : result;
   if (!normalized?.enquiry_id || !normalized.enquiry_reference) {
     throw new BackendPersistenceError("Atomic submission persistence returned an invalid response");
@@ -127,7 +126,5 @@ function stableClone(value: unknown): unknown {
 export async function hashSubmission(value: unknown): Promise<string> {
   const bytes = new TextEncoder().encode(JSON.stringify(stableClone(value)));
   const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join(
-    "",
-  );
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
