@@ -72,10 +72,8 @@ function issue(field: string, code: string, message: string): ValidationIssue {
   return { field, code, message };
 }
 
-export type BaseValidationResult = { ok: true; value: CanonicalIntakeSubmission } | {
-  ok: false;
-  issues: ValidationIssue[];
-};
+export type BaseValidationResult =
+  { ok: true; value: CanonicalIntakeSubmission } | { ok: false; issues: ValidationIssue[] };
 
 export function baseValidateSubmission(raw: unknown): BaseValidationResult {
   const parsed = submissionSchema.safeParse(raw);
