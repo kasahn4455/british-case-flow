@@ -1,148 +1,134 @@
 # Phase 2 — Backend authority foundation (v5.2)
 
-Status: **implementation foundation only — not production-ready**.
+Status: **real backend foundation implemented and tested; still demo-only and not production-approved**.
 
-This phase moves authority out of the browser while preserving the Phase 1 UI unchanged. The implementation follows `Immigration_Intake_Schema_v5.2.json` and deliberately uses deterministic rules only.
+The browser is no longer authoritative. The public demo form maps UI values into the canonical v5.2 payload and POSTs to `/api/intake/:publishedFormId`; all validation, derived facts, routing, tenant resolution and persistence remain server/database controlled. No generative AI or LLM is present in this path.
 
 ## Architecture
 
-1. Public browser posts only to `/api/intake/:publishedFormId`.
-2. The TanStack Start server route resolves the opaque `publishedFormId` to the active firm/configuration using a **server-only Supabase secret key**.
-3. Stage 1 performs strict structural validation. Unknown properties are rejected, so a browser-supplied `firm_id` is never trusted.
-4. Stage 2 derives the five v5.2 effective facts from raw answers.
-5. Stage 3 enforces derived-dependent conditional requirements and persisted past-date confirmations.
-6. Stage 4 evaluates all 15 deterministic routing rules.
-7. Stage 5 chooses the highest severity: `CRITICAL > URGENT > PRIORITY > MANUAL_REVIEW > ROUTINE`.
-8. A single Postgres RPC persists the submission snapshot, enquiry, routing result, audit event, internal-alert outbox event and prospect-acknowledgement outbox event in one transaction.
-9. n8n/worker remains out of scope in this phase. It will consume the outbox after commit; it will never become the system of record.
+1. Public browser maps visible answers to the canonical v5.2 payload and submits only to `/api/intake/:publishedFormId`.
+2. Turnstile is rendered in the browser; the server verifies the token before consuming durable rate-limit quota.
+3. The server resolves the opaque `publishedFormId` to the active firm/configuration using a server-only Supabase secret key.
+4. Stage 1 performs strict structural validation. Unknown properties are rejected, so browser-supplied authority fields such as `firm_id` are never trusted.
+5. Stage 2 derives the five v5.2 effective facts from raw answers.
+6. Stage 3 enforces derived-dependent requirements and persisted past-date confirmations.
+7. Stage 4 evaluates all 15 deterministic routing rules.
+8. Stage 5 chooses the highest severity: `CRITICAL > URGENT > PRIORITY > MANUAL_REVIEW > ROUTINE`.
+9. One Postgres RPC persists the submission snapshot, enquiry, routing result, audit event and both outbox events atomically.
+10. Staff access is Supabase Auth backed and requires an active firm membership plus AAL2 before `/app` is available.
+11. Staff mutations must use TanStack server functions (or explicit route-local CSRF middleware); the priority-override broker uses a server function.
 
-No generative AI or LLM is present in this path.
+## Key server modules
 
-## New server modules
-
-- `src/server/intake-v52/contracts.ts` — canonical v5.2 types and option constants.
-- `src/server/intake-v52/validation.ts` — Stage 1 raw structural validation only.
-- `src/server/intake-v52/semantics.ts` — Stages 2–3 derived facts and conditional validation.
-- `src/server/intake-v52/routing.ts` — condition interpreter + all 15 machine-readable routing rules.
-- `src/server/intake-v52/persistence.ts` — server-only Supabase REST/RPC access and SHA-256 submission hashing.
+- `src/server/intake-v52/contracts.ts` — canonical v5.2 types and constants.
+- `src/server/intake-v52/validation.ts` — Stage 1 structural validation.
+- `src/server/intake-v52/semantics.ts` — derived facts + conditional validation.
+- `src/server/intake-v52/routing.ts` — condition interpreter + all 15 routing rules.
+- `src/server/intake-v52/persistence.ts` — server-only Supabase REST/RPC access and submission hashing.
 - `src/server/intake-v52/service.ts` — authoritative processing order.
-- `src/routes/api.intake.$publishedFormId.ts` — public JSON POST endpoint; never returns internal priority or matched rules.
+- `src/server/intake-abuse/**` — Turnstile, pseudonymous identity and durable rate-limit enforcement.
+- `src/routes/api.intake.$publishedFormId.ts` — public submission endpoint; never returns internal priority/rules.
+- `src/lib/auth/staff-auth.server.ts` — authenticated user, membership and MFA state.
+- `src/lib/enquiries/priority-override.functions.ts` — CSRF-protected staff override entry point.
+- `src/lib/enquiries/priority-override.server.ts` — server-only service-role RPC broker.
 
 ## Database foundation
 
-Migration: `supabase/migrations/20260810022000_phase2_backend_foundation.sql`
+Base migration: `supabase/migrations/20260810022000_phase2_backend_foundation.sql`
 
-Creates:
+Additional migrations add abuse controls, harden server-only RPC access, and complete the server-brokered priority-override model.
+
+Core tables include:
 
 - `firms`
-- `firm_configurations` (versioned, one active config per firm)
-- `published_forms` (opaque public ID -> firm/config)
-- `staff_memberships` (tenant membership + staff/senior/manager/admin role)
-- `submission_snapshots` (immutable raw snapshot + SHA-256 hash)
+- `firm_configurations`
+- `published_forms`
+- `staff_memberships`
+- `submission_snapshots`
 - `enquiries`
 - `routing_results`
 - `outbox_events`
 - `audit_events`
 - `priority_overrides`
 - `access_logs`
+- `intake_rate_limit_windows`
+- `security_events`
 
 ### Tenant isolation and staff access
 
 - RLS is enabled on every public table.
-- The `anon` role gets no direct table access.
+- The `anon` role gets no direct enquiry-table access.
 - Public intake cannot directly insert into database tables.
-- Enquiry access requires an active firm membership **and** Supabase Auth AAL2 (MFA).
-- The membership lookup lives in a private `SECURITY DEFINER` helper, not an exposed schema.
+- Enquiry access requires active same-firm membership and AAL2.
 - Direct authenticated writes to enquiries are intentionally not granted.
-- Human priority changes go through `override_enquiry_priority(...)` so permission and audit rules cannot be bypassed by UI code.
 - Assigned staff membership is constrained to the same firm as the enquiry.
-- The atomic RPC verifies the submitted privacy-notice version/URL against the active firm configuration.
+- The atomic intake RPC re-resolves the active form/configuration and verifies the submitted privacy-notice version/URL.
 
-### Human override rule
+## Human priority override
 
 Severity rank is:
 
 `CRITICAL=5, URGENT=4, PRIORITY=3, MANUAL_REVIEW=2, ROUTINE=1`
 
-- Any active authorised staff member at AAL2 may increase priority.
-- Decreases require `senior`, `manager`, or `admin` role.
-- Every override records reason, actor, previous priority, new priority and timestamp and creates an audit event.
+The override path is deliberately server-brokered:
+
+1. Browser calls a TanStack `createServerFn` mutation; same-origin CSRF middleware applies.
+2. The server reads the Supabase session with `getUser()`, requires active staff membership, and requires both current and next authenticator assurance levels to be `aal2`.
+3. The browser never supplies the actor UUID.
+4. The server calls `override_enquiry_priority(...)` with the server-only Supabase secret and the verified actor UUID.
+5. The service-role-only RPC independently checks that the actor still has active membership for the enquiry's firm and enforces role rules.
+6. Any active authorised staff member may increase priority. Decreases require `senior`, `manager`, or `admin`.
+7. Every override records reason, actor, previous priority, new priority and timestamp and creates an audit event.
+
+This model intentionally does **not** depend on `auth.uid()` or `auth.jwt()` inside a service-role-only RPC. User-session identity is verified at the server-function boundary, while same-firm/role authorization is rechecked in Postgres.
 
 ## Atomic submission RPC
 
-`persist_intake_submission_v52(...)` is executable by `service_role` only. With current Supabase API keys, the server uses `SUPABASE_SECRET_KEY` (`sb_secret_...`), which maps to elevated backend access.
+`persist_intake_submission_v52(...)` is executable by `service_role` only. With current Supabase API keys, the server uses `SUPABASE_SECRET_KEY` (`sb_secret_...`) through the `apikey` header.
 
-The RPC independently resolves the `published_form_id` again and refuses inactive forms or inactive configurations. This is intentional defense in depth: no client or application-layer `firm_id` is accepted as authoritative.
+The prospect-facing API response contains only acceptance/reference information and never returns priority, rule IDs, derived facts or tenant IDs.
 
-The prospect-facing API response contains only:
+## Abuse controls
 
-```json
-{
-  "accepted": true,
-  "enquiryReference": "IM-..."
-}
-```
+Implemented:
 
-It never returns priority, rule IDs, derived facts or tenant IDs.
-
-## Outbox
-
-Every accepted enquiry creates two outbox rows in the same transaction:
-
-- `ENQUIRY_INTERNAL_ALERT`
-- `PROSPECT_ACKNOWLEDGEMENT`
-
-The internal event contains only reference + priority + minimal alert copy. The acknowledgement event stores the exact three approved acknowledgement paragraphs rendered with the firm name. Both have idempotency and retry/dead-letter fields.
-
-## Current abuse protection
-
-Implemented now:
-
-- 32 KiB request body limit
+- 32 KiB body limit
 - JSON content-type requirement
 - strict schema / unexpected-field rejection
-- server-side max lengths, email/phone formats and urgency exclusivity
-- honeypot field support
-- no-store responses
+- server-side max lengths, formats and urgency exclusivity
+- honeypot
+- explicit Turnstile browser widget + server Siteverify
+- per-form/IP/session durable rate limiting using HMAC pseudonyms
+- duplicate retry/double-click suppression using an advisory lock + submission hash
+- non-blocking high-volume CRITICAL security-event recording
+- generic fail-closed errors
 
-**Still a production blocker:** durable per-IP/session/published-form rate limiting, adaptive CAPTCHA, duplicate-submission detection and high-volume security alerting. An in-memory Worker rate limiter is intentionally not used because it would give a false sense of protection across distributed instances.
+See `docs/phase2-abuse-controls.md` for deployment details.
 
 ## Environment
 
-Real values are intentionally absent from GitHub.
+Real values are intentionally absent from GitHub. Required deployment configuration is documented in `.env.example` and includes Supabase browser-safe values, server-only Supabase secret, Turnstile keys/settings and the abuse-control pepper.
 
-```env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SECRET_KEY=sb_secret_...
-```
+## Verification
 
-Read these only inside per-request server code. Never prefix the secret with `VITE_`.
+GitHub Actions runs:
 
-## Tests
+- Node backend/contract tests
+- production build and TanStack route generation
+- full TypeScript check
+- targeted lint including public-form wiring and server-only code
+- clean disposable Supabase startup and all migrations
+- Postgres function lint
+- pgTAP database integration tests
 
-`npm run test:backend` runs Node's built-in test runner against:
+Database tests include the service-role priority-override execution path so a future function cannot silently depend on absent user JWT claims again.
 
-- routing precedence and all 15 rules
-- all eight declared condition operators
-- derived facts
-- conditional validation bypass prevention
-- confirmed/unconfirmed past dates
-- unknown-date handling
-- malformed urgency combinations
-- client-supplied `firm_id` rejection
-- field limits and invalid calendar dates
+## Current limitations / remaining production gates
 
-## Deliberately not done yet
-
-Phase 2 foundation does **not** yet:
-
-- connect the Phase 1 browser form to the API
-- create a real Supabase project or insert real firm data
-- implement staff sign-in/enrolment UI
-- implement MFA enrolment screens
-- implement n8n/worker outbox consumption
-- implement durable abuse rate limiting/CAPTCHA
-- implement retention/deletion automation
-- make the product production-ready
-
-Those remain gated behind setup, testing and compliance approval.
+- The public tenant/form is still explicitly fictional/demo-only.
+- Real deployment secrets must be configured on the hosting platform and manually exercised end-to-end.
+- A real staff Auth account must be provisioned and TOTP enrolment/challenge verified in the deployed app.
+- The staff enquiry list/detail screens still use `MOCK_ENQUIRIES`; real tenant-scoped reads are the next application task.
+- Outbox/security-event delivery workers are not implemented.
+- Retention/deletion and old rate-limit-window cleanup jobs are not implemented.
+- Production privacy/compliance/security sign-off is still required before accepting real client information.
