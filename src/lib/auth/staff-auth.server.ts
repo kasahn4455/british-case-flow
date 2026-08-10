@@ -1,8 +1,16 @@
-import type { StaffAuthState, StaffRole } from "./staff-auth-state";
+import type {
+  AuthenticatorLevel,
+  StaffAuthState,
+  StaffRole,
+} from "./staff-auth-state";
 import {
   createSupabaseServerClient,
   StaffAuthServerConfigurationError,
 } from "../supabase/server";
+
+function normalizeAuthenticatorLevel(value: unknown): AuthenticatorLevel {
+  return value === "aal1" || value === "aal2" ? value : null;
+}
 
 export async function readStaffAuthState(): Promise<StaffAuthState> {
   let supabase;
@@ -45,10 +53,8 @@ export async function readStaffAuthState(): Promise<StaffAuthState> {
     email: user.email ?? null,
     firmId: membership.firm_id as string,
     role: membership.role as StaffRole,
-    currentLevel: assurance.currentLevel,
-    nextLevel: assurance.nextLevel,
-    verifiedTotpFactorIds: (factors.totp ?? [])
-      .filter((factor) => factor.status === "verified")
-      .map((factor) => factor.id),
+    currentLevel: normalizeAuthenticatorLevel(assurance.currentLevel),
+    nextLevel: normalizeAuthenticatorLevel(assurance.nextLevel),
+    verifiedTotpFactorIds: (factors.totp ?? []).map((factor) => factor.id),
   };
 }
