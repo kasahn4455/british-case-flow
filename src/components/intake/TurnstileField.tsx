@@ -41,9 +41,11 @@ function loadTurnstileScript(): Promise<void> {
     const existing = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
     if (existing) {
       existing.addEventListener("load", () => resolve(), { once: true });
-      existing.addEventListener("error", () => reject(new Error("Turnstile script failed to load")), {
-        once: true,
-      });
+      existing.addEventListener(
+        "error",
+        () => reject(new Error("Turnstile script failed to load")),
+        { once: true },
+      );
       return;
     }
 
@@ -60,7 +62,10 @@ function loadTurnstileScript(): Promise<void> {
   return scriptPromise;
 }
 
-export function TurnstileField(props: {
+export function TurnstileField({
+  onTokenChange,
+  resetKey,
+}: {
   onTokenChange: (token: string) => void;
   resetKey: number;
 }) {
@@ -83,10 +88,13 @@ export function TurnstileField(props: {
             action: "intake-submit",
             theme: "auto",
             size: "flexible",
-            callback: (token) => props.onTokenChange(token),
-            "expired-callback": () => props.onTokenChange(""),
+            callback: (token) => {
+              setLoadError(false);
+              onTokenChange(token);
+            },
+            "expired-callback": () => onTokenChange(""),
             "error-callback": () => {
-              props.onTokenChange("");
+              onTokenChange("");
               setLoadError(true);
             },
           });
@@ -101,18 +109,21 @@ export function TurnstileField(props: {
       }
       widgetIdRef.current = null;
     };
-  }, [siteKey, props.onTokenChange]);
+  }, [siteKey, onTokenChange]);
 
   useEffect(() => {
-    props.onTokenChange("");
+    onTokenChange("");
     if (widgetIdRef.current !== null && window.turnstile) {
       window.turnstile.reset(widgetIdRef.current);
     }
-  }, [props.resetKey, props.onTokenChange]);
+  }, [resetKey, onTokenChange]);
 
   if (!siteKey) {
     return (
-      <p role="status" className="rounded-md border border-border bg-surface px-4 py-3 text-sm text-muted-foreground">
+      <p
+        role="status"
+        className="rounded-md border border-border bg-surface px-4 py-3 text-sm text-muted-foreground"
+      >
         Human verification is not configured in this environment. Submission is disabled.
       </p>
     );
