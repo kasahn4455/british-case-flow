@@ -6,6 +6,8 @@ import { KnownDateField } from "@/components/intake/KnownDateField";
 import { RadioGroupField } from "@/components/intake/RadioGroupField";
 import { SectionCard } from "@/components/intake/SectionCard";
 import { TextField } from "@/components/intake/TextField";
+import { TurnstileField } from "@/components/intake/TurnstileField";
+import { toCanonicalSubmission } from "@/lib/intake/canonical-submission";
 import {
   CATEGORIES,
   CONTACT_METHODS,
@@ -67,14 +69,20 @@ export const Route = createFileRoute("/intake/$publishedFormId/")({
 
 /**
  * Frontend responsibilities only: field display, conditional visibility,
- * basic UX validation and mock navigation. No priority, routing, deadline
- * calculation or legal interpretation happens here.
+ * UX validation and transport to the authoritative server endpoint. No priority,
+ * routing, deadline calculation or legal interpretation happens here.
  */
 function IntakeForm() {
   const { publishedFormId } = Route.useParams();
   const navigate = useNavigate();
   const [values, setValues] = useState<IntakeFormValues>(emptyIntakeForm);
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [privacyNoticeDisplayedAt] = useState(() => new Date().toISOString());
+  const [website, setWebsite] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState("");
 
   const set = <K extends keyof IntakeFormValues>(key: K, value: IntakeFormValues[K]) =>
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -154,8 +162,10 @@ function IntakeForm() {
     return found;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmissionError("");
+
     const cleaned = pruneHidden(values);
     setValues(cleaned);
     const found = validate(cleaned);
@@ -165,8 +175,56 @@ function IntakeForm() {
       firstError?.scrollIntoView({ block: "center" });
       return;
     }
-    // Local/mock submission only — nothing is stored or sent anywhere.
-    navigate({ to: "/intake/$publishedFormId/submitted", params: { publishedFormId } });
+
+    if (!turnstileToken) {
+      setSubmissionError("Complete the human verification before submitting.");
+      return;
+    }
+
+    const payload = toCanonicalSubmission(cleaned, {
+      privacyNoticeVersion: FIRM.privacyNoticeVersion,
+      privacyNoticeUrl: FIRM.privacyPolicyUrl,
+      privacyNoticeDisplayedAt,
+      website,
+    });
+
+    setSubmitting(true);
+    try {
+      const response = await fetch(`/api/intake/${encodeURIComponent(publishedFormId)}`, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "content-type": "application/json",
+          "x-turnstile-token": turnstileToken,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        navigate({ to: "/intake/$publishedFormId/submitted", params: { publishedFormId } });
+        return;
+      }
+
+      setTurnstileResetKey((value) => value + 1);
+      if (response.status === 403) {
+        setSubmissionError("Human verification expired or was not accepted. Please try again.");
+      } else if (response.status === 404) {
+        setSubmissionError("This enquiry form is not currently available.");
+      } else if (response.status === 422) {
+        setSubmissionError("Some information could not be accepted. Review the form and try again.");
+      } else if (response.status === 429) {
+        setSubmissionError("Too many submission attempts. Please wait before trying again.");
+      } else if (response.status === 503) {
+        setSubmissionError("Submission is temporarily unavailable. Please try again later.");
+      } else {
+        setSubmissionError("The enquiry could not be submitted. Please try again.");
+      }
+    } catch {
+      setTurnstileResetKey((value) => value + 1);
+      setSubmissionError("The enquiry could not be submitted. Check your connection and try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -177,8 +235,24 @@ function IntakeForm() {
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
         Please answer as fully as you can. Fields marked optional can be left blank.
       </p>
+      <p className="mt-3 rounded-md border border-border bg-surface px-4 py-3 text-sm font-medium text-foreground">
+        Fictional demo only — do not enter real client or case information.
+      </p>
 
       <form onSubmit={handleSubmit} noValidate className="mt-8 space-y-6">
+        <div className="absolute left-[-10000px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
+          <label htmlFor="website">Website</label>
+          <input
+            id="website"
+            name="website"
+            type="text"
+            value={website}
+            onChange={(event) => setWebsite(event.target.value)}
+            autoComplete="off"
+            tabIndex={-1}
+          />
+        </div>
+
         <SectionCard step="Section 1" title="Privacy">
           <div className="space-y-3 text-sm leading-relaxed text-foreground">
             <p>
@@ -401,15 +475,29 @@ function IntakeForm() {
           />
         </SectionCard>
 
+        <SectionCard step="Final check" title="Human verification">
+          <TurnstileField onTokenChange={setTurnstileToken} resetKey={turnstileResetKey} />
+        </SectionCard>
+
+        {submissionError ? (
+          <p
+            role="alert"
+            className="rounded-md border border-destructive/40 bg-card px-4 py-3 text-sm text-destructive"
+          >
+            {submissionError}
+          </p>
+        ) : null}
+
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted-foreground">
-            Prototype form — submissions are not stored or sent.
+            Fictional demo only — do not enter real client information.
           </p>
           <button
             type="submit"
-            className="h-11 rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            disabled={submitting || !turnstileToken}
+            className="h-11 rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Submit enquiry
+            {submitting ? "Submitting…" : "Submit enquiry"}
           </button>
         </div>
       </form>
