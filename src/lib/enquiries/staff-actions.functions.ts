@@ -7,11 +7,7 @@ import { applyContactLog, applyStaffAssignment, applyStatusChange } from "./staf
 const publicReferenceSchema = z.string().trim().min(1).max(120);
 
 function requireAal2Staff(state: Awaited<ReturnType<typeof readStaffAuthState>>) {
-  if (
-    state.kind !== "staff" ||
-    state.currentLevel !== "aal2" ||
-    state.nextLevel !== "aal2"
-  ) {
+  if (state.kind !== "staff" || state.currentLevel !== "aal2" || state.nextLevel !== "aal2") {
     throw new Error("A verified AAL2 staff session is required");
   }
   return state;
