@@ -1,12 +1,13 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { DetailField } from "@/components/staff/DetailField";
 import { PriorityBadge } from "@/components/staff/PriorityBadge";
-import { formatReceived, getMockEnquiry, type MockEnquiry } from "@/lib/mock/enquiries";
+import { getLiveEnquiryDetail } from "@/lib/enquiries/live-enquiries.functions";
+import { formatReceived } from "@/lib/enquiries/live-enquiries";
 import { FIRM } from "@/lib/mock/firm";
 
 export const Route = createFileRoute("/app/enquiries/$id")({
-  loader: ({ params }): { enquiry: MockEnquiry } => {
-    const enquiry = getMockEnquiry(params.id);
+  loader: async ({ params }) => {
+    const enquiry = await getLiveEnquiryDetail({ data: { reference: params.id } });
     if (!enquiry) throw notFound();
     return { enquiry };
   },
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/app/enquiries/$id")({
       },
       {
         name: "description",
-        content: "Fictional enquiry record shown for prototype demonstration purposes only.",
+        content: "Authenticated tenant-scoped immigration enquiry record.",
       },
       { name: "robots", content: "noindex, nofollow" },
     ],
@@ -33,7 +34,7 @@ function EnquiryNotFound() {
     <div className="rounded-md border border-border bg-card px-6 py-10 text-center">
       <h1 className="font-serif text-xl font-semibold">Enquiry not found</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        No fictional record matches that reference.
+        No accessible enquiry matches that reference.
       </p>
       <Link
         to="/app/enquiries"
@@ -68,7 +69,7 @@ function EnquiryDetail() {
         </div>
         <div className="flex items-center gap-3">
           <PriorityBadge priority={enquiry.priority} />
-          <span className="text-xs text-muted-foreground">Fixture value — not calculated</span>
+          <span className="text-xs text-muted-foreground">Persisted server routing value</span>
         </div>
       </header>
 
@@ -82,16 +83,21 @@ function EnquiryDetail() {
             <DetailField label="Category">{enquiry.category}</DetailField>
             <DetailField label="Location">{enquiry.location}</DetailField>
             <DetailField label="Prospect-entered dates">
-              <ul className="space-y-1">
-                {enquiry.statedDates.map((d: { label: string; value: string }) => (
-                  <li key={d.label}>
-                    <span className="text-muted-foreground">{d.label}: </span>
-                    {d.value}
-                  </li>
-                ))}
-              </ul>
+              {enquiry.statedDates.length > 0 ? (
+                <ul className="space-y-1">
+                  {enquiry.statedDates.map((date) => (
+                    <li key={date.label}>
+                      <span className="text-muted-foreground">{date.label}: </span>
+                      {date.value}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <span className="text-muted-foreground">No exact dates supplied</span>
+              )}
               <p className="mt-2 text-xs text-muted-foreground">
-                Dates as entered by the prospect. No deadline has been calculated or verified.
+                Dates exactly as supplied by the prospect. No legal deadline has been calculated or
+                verified by this screen.
               </p>
             </DetailField>
             <DetailField label="Contact preference">
@@ -99,11 +105,18 @@ function EnquiryDetail() {
             </DetailField>
             <DetailField label="Status">{enquiry.status}</DetailField>
             <DetailField label="Assigned staff">{enquiry.assignedTo ?? "Unassigned"}</DetailField>
-            <DetailField label="Matched rule ID">
-              <span className="font-mono text-xs">{enquiry.matchedRuleId}</span>
-              <span className="ml-2 text-xs text-muted-foreground">
-                (placeholder — no meaning in this prototype)
-              </span>
+            <DetailField label="Conflict-check state">{enquiry.conflictCheckState}</DetailField>
+            <DetailField label="Routing reason">{enquiry.priorityReason}</DetailField>
+            <DetailField label="Matched routing rules">
+              {enquiry.matchedRuleIds.length > 0 ? (
+                <ul className="space-y-1 font-mono text-xs">
+                  {enquiry.matchedRuleIds.map((ruleId) => (
+                    <li key={ruleId}>{ruleId}</li>
+                  ))}
+                </ul>
+              ) : (
+                <span className="text-muted-foreground">No stored rule IDs</span>
+              )}
             </DetailField>
           </dl>
         </section>
@@ -125,8 +138,12 @@ function EnquiryDetail() {
               Conflict-check information
             </h2>
             <dl className="mt-2">
-              <DetailField label="Previous names">{enquiry.conflictCheck.previousNames}</DetailField>
-              <DetailField label="Spouse/partner name">{enquiry.conflictCheck.partnerName}</DetailField>
+              <DetailField label="Previous names">
+                {enquiry.conflictCheck.previousNames}
+              </DetailField>
+              <DetailField label="Spouse/partner name">
+                {enquiry.conflictCheck.partnerName}
+              </DetailField>
               <DetailField label="Sponsoring employer">
                 {enquiry.conflictCheck.sponsoringEmployer}
               </DetailField>
@@ -135,15 +152,8 @@ function EnquiryDetail() {
               </DetailField>
             </dl>
             <p className="mt-3 text-xs text-muted-foreground">
-              Information as supplied. Conflict clearance is not performed in this prototype.
+              Information as supplied. The system does not automatically clear conflicts.
             </p>
-          </section>
-
-          <section className="rounded-md border border-border bg-card px-5 py-4">
-            <p className="text-sm font-medium text-foreground">
-              Automated acknowledgement sent ✓
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">Fictional record.</p>
           </section>
         </div>
       </div>
@@ -154,7 +164,8 @@ function EnquiryDetail() {
       >
         <h2 className="text-sm font-semibold text-foreground">Staff actions</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Reserved for a later phase. No actions are available in this prototype.
+          This screen now reads live data. Staff mutation controls remain separately gated; the
+          audited server-brokered priority override exists but is not exposed as a UI control yet.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {["Assign", "Change status", "Adjust priority", "Log contact"].map((label) => (

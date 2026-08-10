@@ -1,4 +1,4 @@
-import { PRIORITY_LABELS, type Priority } from "@/lib/mock/enquiries";
+import { PRIORITY_LABELS, type Priority } from "@/lib/enquiries/live-enquiries";
 
 const STYLES: Record<Priority, string> = {
   CRITICAL: "bg-critical text-critical-foreground border-critical-foreground/25",
