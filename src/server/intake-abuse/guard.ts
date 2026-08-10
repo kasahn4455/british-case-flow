@@ -1,11 +1,7 @@
 import { z } from "zod";
 
 import { checkIntakeRateLimits } from "./database.ts";
-import {
-  getOrCreateIntakeSession,
-  getTrustedClientIp,
-  hmacIdentifier,
-} from "./identity.ts";
+import { getOrCreateIntakeSession, getTrustedClientIp, hmacIdentifier } from "./identity.ts";
 import { verifyTurnstileToken } from "./turnstile.ts";
 
 const pepperSchema = z.string().min(32);
@@ -40,10 +36,12 @@ export type IntakeAbuseContext = {
 
 function runtimeEnv(): Record<string, string | undefined> {
   return (
-    globalThis as typeof globalThis & {
-      process?: { env?: Record<string, string | undefined> };
-    }
-  ).process?.env ?? {};
+    (
+      globalThis as typeof globalThis & {
+        process?: { env?: Record<string, string | undefined> };
+      }
+    ).process?.env ?? {}
+  );
 }
 
 function getAbusePepper(): string {
@@ -52,9 +50,7 @@ function getAbusePepper(): string {
   return parsed.data;
 }
 
-export async function prepareIntakeAbuseContext(
-  request: Request,
-): Promise<IntakeAbuseContext> {
+export async function prepareIntakeAbuseContext(request: Request): Promise<IntakeAbuseContext> {
   const remoteIp = getTrustedClientIp(request);
   const { sessionId, setCookie } = getOrCreateIntakeSession(request.headers.get("cookie"));
   const pepper = getAbusePepper();
