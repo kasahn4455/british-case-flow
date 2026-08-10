@@ -68,11 +68,7 @@ test("routing rule inventory exactly matches frozen v5.2", () => {
 });
 
 test("manual review rules cover letter, unknown date and unresolved detention", () => {
-  const letter = routeSubmission(
-    baseSubmission({ letter_mentions: "Not sure" }),
-    derived(),
-    NOW,
-  );
+  const letter = routeSubmission(baseSubmission({ letter_mentions: "Not sure" }), derived(), NOW);
   assert(letter.matched_rule_ids.includes("MANUAL_NOT_SURE_LETTER"));
 
   const dateUnknown = routeSubmission(
