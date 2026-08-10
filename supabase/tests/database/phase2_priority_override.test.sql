@@ -2,7 +2,7 @@ create extension if not exists pgtap with schema extensions;
 
 begin;
 
-select plan(12);
+select plan(13);
 
 select ok(
   to_regprocedure('public.override_enquiry_priority(uuid,public.enquiry_priority,text)') is null,
@@ -125,6 +125,11 @@ select * from public.persist_intake_submission_v52(
 );
 
 set local role service_role;
+
+select ok(
+  auth.uid() is null,
+  'service-role execution path has no authenticated user UUID in auth.uid()'
+);
 
 select lives_ok(
   $$
