@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - ".env.example"
+      - "vite.config.ts"
+      - "vercel.json"
       - "src/server/intake-v52/**"
       - "src/server/intake-abuse/**"
       - "src/server/outbox-worker/**"
@@ -55,12 +57,19 @@ jobs:
       - name: Production build and route generation
         run: npm run build
 
+      - name: Verify Vercel Build Output API artifact
+        run: |
+          test -f .vercel/output/config.json
+          test -d .vercel/output/functions
+          test -d .vercel/output/static
+
       - name: TypeScript
         run: npx tsc --noEmit
 
       - name: Lint Phase 2 files
         run: >-
           npx eslint
+          vite.config.ts
           src/server/intake-v52
           src/server/intake-abuse
           src/server/outbox-worker
