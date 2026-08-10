@@ -3,6 +3,7 @@ name: Phase 2 verification
 on:
   pull_request:
     paths:
+      - ".env.example"
       - "src/server/intake-v52/**"
       - "src/server/intake-abuse/**"
       - "src/components/intake/TurnstileField.tsx"
