@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { FIRM } from "../lib/mock/firm";
 
 function NotFoundComponent() {
   return (
@@ -77,18 +78,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "A frontend prototype for UK immigration law firm enquiry intake." },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "A frontend prototype for UK immigration law firm enquiry intake." },
+      { title: `${FIRM.shortName} — Intake Prototype` },
+      {
+        name: "description",
+        content: "Frontend-only fictional prototype for a UK immigration law firm enquiry intake workflow.",
+      },
+      { name: "robots", content: "noindex, nofollow" },
+      { property: "og:title", content: `${FIRM.shortName} — Intake Prototype` },
+      {
+        property: "og:description",
+        content: "Fictional frontend prototype for a UK immigration law firm enquiry intake workflow.",
+      },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "Lovable App" },
-      { name: "twitter:description", content: "A frontend prototype for UK immigration law firm enquiry intake." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/19a60c5a2d7e166dfe5c7806e6e2e1d2/id-preview-ca4e42af--4b2d6079-5022-42f1-aa9f-d5e32943aecd.lovable.app-1786159566004.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/19a60c5a2d7e166dfe5c7806e6e2e1d2/id-preview-ca4e42af--4b2d6079-5022-42f1-aa9f-d5e32943aecd.lovable.app-1786159566004.png" },
+      { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: `${FIRM.shortName} — Intake Prototype` },
+      {
+        name: "twitter:description",
+        content: "Fictional frontend prototype for a UK immigration law firm enquiry intake workflow.",
+      },
     ],
     links: [
       {
