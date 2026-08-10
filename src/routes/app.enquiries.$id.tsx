@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { DetailField } from "@/components/staff/DetailField";
 import { PriorityBadge } from "@/components/staff/PriorityBadge";
+import { StaffActionsPanel } from "@/components/staff/StaffActionsPanel";
 import { getLiveEnquiryDetail } from "@/lib/enquiries/live-enquiries.functions";
 import { formatReceived } from "@/lib/enquiries/live-enquiries";
 import { FIRM } from "@/lib/mock/firm";
@@ -158,28 +159,42 @@ function EnquiryDetail() {
         </div>
       </div>
 
-      <section
-        aria-label="Staff actions"
-        className="rounded-md border border-dashed border-border bg-surface px-5 py-4"
-      >
-        <h2 className="text-sm font-semibold text-foreground">Staff actions</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          This screen now reads live data. Staff mutation controls remain separately gated; the
-          audited server-brokered priority override exists but is not exposed as a UI control yet.
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {["Assign", "Change status", "Adjust priority", "Log contact"].map((label) => (
-            <button
-              key={label}
-              type="button"
-              disabled
-              className="h-10 cursor-not-allowed rounded-md border border-border bg-card px-4 text-sm font-medium text-muted-foreground opacity-70"
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+      <section className="rounded-md border border-border bg-card px-5 py-5">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          Contact history
+        </h2>
+        {enquiry.contactHistory.length > 0 ? (
+          <ul className="mt-4 divide-y divide-border">
+            {enquiry.contactHistory.map((entry) => (
+              <li key={entry.id} className="py-3 first:pt-0 last:pb-0">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-semibold">
+                    {entry.direction === "OUTBOUND" ? "Outbound" : "Inbound"} · {entry.channel}
+                  </p>
+                  <time className="text-xs text-muted-foreground">
+                    {formatReceived(entry.contactedAt)}
+                  </time>
+                </div>
+                <p className="mt-1 text-sm">{entry.outcome}</p>
+                {entry.notes ? (
+                  <p className="mt-1 whitespace-pre-wrap text-xs text-muted-foreground">
+                    {entry.notes}
+                  </p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-3 text-sm text-muted-foreground">No contact has been logged yet.</p>
+        )}
       </section>
+
+      <StaffActionsPanel
+        publicReference={enquiry.id}
+        currentStatus={enquiry.statusCode}
+        currentPriority={enquiry.priority}
+        isAssigned={Boolean(enquiry.assignedTo)}
+      />
     </div>
   );
 }
