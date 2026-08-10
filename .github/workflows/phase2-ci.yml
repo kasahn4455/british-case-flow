@@ -51,9 +51,6 @@ jobs:
       - name: Backend tests
         run: npm run test:backend
 
-      # TanStack's Vite plugin owns src/routeTree.gen.ts. A bare tsc run on a fresh
-      # checkout can see a stale generated tree after a route file is added, so build
-      # first to regenerate the file-route types, then run the full compiler check.
       - name: Production build and route generation
         run: npm run build
 
@@ -88,6 +85,18 @@ jobs:
           'src/routes/app.enquiries.$id.tsx'
           src/start.ts
           tests/backend
+
+      - name: Package source tree
+        run: |
+          tar --exclude=.git --exclude=node_modules --exclude=.output --exclude=.vercel/output -czf british-case-flow-source.tgz .
+
+      - name: Upload source tree
+        uses: actions/upload-artifact@v4
+        with:
+          name: british-case-flow-source
+          path: british-case-flow-source.tgz
+          if-no-files-found: error
+          retention-days: 1
 
   database:
     runs-on: ubuntu-latest
