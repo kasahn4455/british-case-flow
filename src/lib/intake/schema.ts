@@ -83,11 +83,11 @@ const requiredText = (label: string, max: number) =>
     .max(max, `${label} must be ${max} characters or fewer`);
 
 export const detailsSchema = z.object({
-  fullName: requiredText("Full name", 120),
-  email: requiredText("Email", 200).pipe(z.string().email("Enter a valid email address")),
-  phone: requiredText("Phone", 40).regex(/^[0-9+()\s-]{6,40}$/, "Enter a valid phone number"),
+  fullName: requiredText("Full name", 150),
+  email: requiredText("Email", 254).pipe(z.string().email("Enter a valid email address")),
+  phone: requiredText("Phone", 20).regex(/^[0-9+()\s-]{6,20}$/, "Enter a valid phone number"),
   contactMethod: z.string().min(1, "Select a preferred contact method"),
-  contactTime: z.string().min(1, "Select a preferred contact time"),
+  contactTime: z.string().optional(),
 });
 
 export const optionalTextSchema = z
@@ -104,12 +104,28 @@ export function isValidDateString(value: string): boolean {
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
 }
 
-/** Pure data-entry check: is the entered calendar date earlier than today? */
-export function isBeforeToday(value: string): boolean {
+/** Returns today's calendar date in Europe/London as yyyy-mm-dd. */
+export function getLondonTodayString(now: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
+
+  if (!year || !month || !day) {
+    throw new Error("Unable to resolve Europe/London calendar date");
+  }
+
+  return `${year}-${month}-${day}`;
+}
+
+/** Pure UX check: is the entered calendar date earlier than today in Europe/London? */
+export function isBeforeToday(value: string, now: Date = new Date()): boolean {
   if (!isValidDateString(value)) return false;
-  const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(
-    today.getDate(),
-  ).padStart(2, "0")}`;
-  return value < todayStr;
+  return value < getLondonTodayString(now);
 }
