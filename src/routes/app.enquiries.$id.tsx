@@ -96,8 +96,8 @@ function EnquiryDetail() {
                 <span className="text-muted-foreground">No exact dates supplied</span>
               )}
               <p className="mt-2 text-xs text-muted-foreground">
-                Dates exactly as supplied by the prospect. No legal deadline has been calculated
-                or verified by this screen.
+                Dates exactly as supplied by the prospect. No legal deadline has been calculated or
+                verified by this screen.
               </p>
             </DetailField>
             <DetailField label="Contact preference">
@@ -138,8 +138,12 @@ function EnquiryDetail() {
               Conflict-check information
             </h2>
             <dl className="mt-2">
-              <DetailField label="Previous names">{enquiry.conflictCheck.previousNames}</DetailField>
-              <DetailField label="Spouse/partner name">{enquiry.conflictCheck.partnerName}</DetailField>
+              <DetailField label="Previous names">
+                {enquiry.conflictCheck.previousNames}
+              </DetailField>
+              <DetailField label="Spouse/partner name">
+                {enquiry.conflictCheck.partnerName}
+              </DetailField>
               <DetailField label="Sponsoring employer">
                 {enquiry.conflictCheck.sponsoringEmployer}
               </DetailField>
