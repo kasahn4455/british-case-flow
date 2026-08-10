@@ -25,7 +25,7 @@ export const Route = createFileRoute("/app/enquiries/")({
 });
 
 function EnquiriesDashboard() {
-  const { enquiries, counts } = Route.useLoaderData();
+  const { enquiries, counts, totalCount, hasMore } = Route.useLoaderData();
 
   return (
     <div className="space-y-8">
@@ -41,9 +41,16 @@ function EnquiriesDashboard() {
       <SummaryCards counts={counts} />
 
       <section aria-label="Enquiry queue" className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-          Enquiry queue ({enquiries.length})
-        </h2>
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            Enquiry queue ({totalCount})
+          </h2>
+          {hasMore ? (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Showing the latest {enquiries.length} enquiries. Priority totals include all records.
+            </p>
+          ) : null}
+        </div>
         {enquiries.length > 0 ? (
           <EnquiryTable enquiries={enquiries} />
         ) : (
