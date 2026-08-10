@@ -27,7 +27,12 @@ export class BackendPersistenceError extends Error {
 }
 
 function getBackendEnv() {
-  const parsed = envSchema.safeParse(process.env);
+  const runtimeEnv = (
+    globalThis as typeof globalThis & {
+      process?: { env?: Record<string, string | undefined> };
+    }
+  ).process?.env ?? {};
+  const parsed = envSchema.safeParse(runtimeEnv);
   if (!parsed.success) throw new BackendConfigurationError();
   return parsed.data;
 }
