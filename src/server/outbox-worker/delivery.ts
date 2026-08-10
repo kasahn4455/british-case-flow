@@ -33,6 +33,10 @@ function getEnv() {
   return parsed.data;
 }
 
+export function assertOutboxDeliveryConfigured(): void {
+  getEnv();
+}
+
 export async function deliverOutboxEvent(event: ClaimedOutboxEvent): Promise<void> {
   const env = getEnv();
   const response = await fetch(env.OUTBOX_DELIVERY_WEBHOOK_URL, {
