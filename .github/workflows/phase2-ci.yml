@@ -6,7 +6,7 @@ on:
       - "src/server/intake-v52/**"
       - "src/routes/api.intake.$publishedFormId.ts"
       - "tests/backend/**"
-      - "supabase/migrations/**"
+      - "supabase/**"
       - "package.json"
       - ".github/workflows/phase2-ci.yml"
   workflow_dispatch:
@@ -49,3 +49,29 @@ jobs:
           src/server/intake-v52
           'src/routes/api.intake.$publishedFormId.ts'
           tests/backend
+
+  database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v2
+        with:
+          version: latest
+          github-token: ${{ github.token }}
+
+      - name: Initialize local Supabase config
+        run: supabase init --force
+
+      - name: Start disposable database and apply migrations
+        run: supabase db start
+
+      - name: Lint Postgres functions
+        run: supabase db lint --local --level error --fail-on error
+
+      - name: Database integration tests
+        run: supabase test db
