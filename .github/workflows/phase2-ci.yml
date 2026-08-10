@@ -62,6 +62,19 @@ jobs:
           'src/routes/api.intake.$publishedFormId.ts'
           tests/backend
 
+      - name: Package full source snapshot
+        run: >-
+          zip -qr british-case-flow-full-latest.zip .
+          -x '.git/*' 'node_modules/*' '.output/*' '.wrangler/*'
+
+      - name: Upload full source ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: british-case-flow-full-latest
+          path: british-case-flow-full-latest.zip
+          if-no-files-found: error
+          retention-days: 7
+
   database:
     runs-on: ubuntu-latest
     timeout-minutes: 20
