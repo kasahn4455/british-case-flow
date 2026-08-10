@@ -1,13 +1,7 @@
 export const SCHEMA_VERSION = "5.2" as const;
 export const ROUTING_RULE_VERSION = "v5.2" as const;
 
-export const PRIORITIES = [
-  "CRITICAL",
-  "URGENT",
-  "PRIORITY",
-  "MANUAL_REVIEW",
-  "ROUTINE",
-] as const;
+export const PRIORITIES = ["CRITICAL", "URGENT", "PRIORITY", "MANUAL_REVIEW", "ROUTINE"] as const;
 export type Priority = (typeof PRIORITIES)[number];
 
 export const CATEGORIES = [
