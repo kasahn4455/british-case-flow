@@ -52,7 +52,9 @@ function getAbusePepper(): string {
   return parsed.data;
 }
 
-export async function prepareIntakeAbuseContext(request: Request): Promise<IntakeAbuseContext> {
+export async function prepareIntakeAbuseContext(
+  request: Request,
+): Promise<IntakeAbuseContext> {
   const remoteIp = getTrustedClientIp(request);
   const { sessionId, setCookie } = getOrCreateIntakeSession(request.headers.get("cookie"));
   const pepper = getAbusePepper();
