@@ -105,6 +105,12 @@ Implemented:
 
 See `docs/phase2-abuse-controls.md` for deployment details.
 
+## Staff workspace state
+
+Authentication and MFA are real. The enquiry list/detail UI is **not** real-data-backed yet: `app.enquiries.index.tsx` and `app.enquiries.$id.tsx` still use `MOCK_ENQUIRIES` and remain explicitly labelled as fictional fixture data. No claim should be made that authenticated staff are currently viewing live enquiries.
+
+Replacing those fixtures with tenant-scoped server reads from `enquiries`/`routing_results` is the next application-layer task.
+
 ## Environment
 
 Real values are intentionally absent from GitHub. Required deployment configuration is documented in `.env.example` and includes Supabase browser-safe values, server-only Supabase secret, Turnstile keys/settings and the abuse-control pepper.
