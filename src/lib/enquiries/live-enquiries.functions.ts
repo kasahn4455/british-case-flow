@@ -5,11 +5,7 @@ import { readStaffAuthState } from "@/lib/auth/staff-auth.server";
 import { readEnquiryDetailForFirm, readEnquiryQueueForFirm } from "./live-enquiries.server";
 
 function requireAal2StaffFirmId(state: Awaited<ReturnType<typeof readStaffAuthState>>): string {
-  if (
-    state.kind !== "staff" ||
-    state.currentLevel !== "aal2" ||
-    state.nextLevel !== "aal2"
-  ) {
+  if (state.kind !== "staff" || state.currentLevel !== "aal2" || state.nextLevel !== "aal2") {
     throw new Error("A verified AAL2 staff session is required");
   }
   return state.firmId;
