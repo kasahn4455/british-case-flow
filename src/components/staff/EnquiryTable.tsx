@@ -1,11 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { formatReceived, type MockEnquiry } from "@/lib/mock/enquiries";
+import { formatReceived, type LiveEnquirySummary } from "@/lib/enquiries/live-enquiries";
 import { PriorityBadge } from "./PriorityBadge";
 
-export function EnquiryTable({ enquiries }: { enquiries: MockEnquiry[] }) {
+export function EnquiryTable({ enquiries }: { enquiries: LiveEnquirySummary[] }) {
   return (
     <div className="rounded-md border border-border bg-card">
-      {/* Desktop table */}
       <table className="hidden w-full text-left text-sm md:table">
         <thead>
           <tr className="border-b border-border text-xs uppercase tracking-[0.1em] text-muted-foreground">
@@ -18,50 +17,63 @@ export function EnquiryTable({ enquiries }: { enquiries: MockEnquiry[] }) {
           </tr>
         </thead>
         <tbody>
-          {enquiries.map((e) => (
-            <tr key={e.id} className="border-b border-border last:border-0 hover:bg-muted/60">
+          {enquiries.map((enquiry) => (
+            <tr
+              key={enquiry.id}
+              className="border-b border-border last:border-0 hover:bg-muted/60"
+            >
               <td className="px-4 py-3 font-medium">
                 <Link
                   to="/app/enquiries/$id"
-                  params={{ id: e.id }}
+                  params={{ id: enquiry.id }}
                   className="underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 >
-                  {e.id}
+                  {enquiry.id}
                 </Link>
               </td>
-              <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
-                {formatReceived(e.receivedAt)}
+              <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
+                {formatReceived(enquiry.receivedAt)}
               </td>
               <td className="px-4 py-3">
-                <PriorityBadge priority={e.priority} />
+                <PriorityBadge priority={enquiry.priority} />
               </td>
-              <td className="px-4 py-3">{e.category}</td>
-              <td className="px-4 py-3 text-muted-foreground">{e.status}</td>
-              <td className="px-4 py-3 text-muted-foreground">{e.assignedTo ?? "Unassigned"}</td>
+              <td className="px-4 py-3">{enquiry.category}</td>
+              <td className="px-4 py-3 text-muted-foreground">{enquiry.status}</td>
+              <td className="px-4 py-3 text-muted-foreground">
+                {enquiry.assignedTo ?? "Unassigned"}
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      {/* Mobile cards */}
       <ul className="divide-y divide-border md:hidden">
-        {enquiries.map((e) => (
-          <li key={e.id} className="px-4 py-4">
+        {enquiries.map((enquiry) => (
+          <li key={enquiry.id} className="px-4 py-4">
             <div className="flex items-center justify-between gap-3">
               <Link
                 to="/app/enquiries/$id"
-                params={{ id: e.id }}
+                params={{ id: enquiry.id }}
                 className="text-sm font-semibold underline-offset-4 hover:underline"
               >
-                {e.id}
+                {enquiry.id}
               </Link>
-              <PriorityBadge priority={e.priority} />
+              <PriorityBadge priority={enquiry.priority} />
             </div>
-            <p className="mt-2 text-sm text-foreground">{e.category}</p>
+            <p className="mt-2 text-sm text-foreground">{enquiry.category}</p>
             <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
-              <div><dt className="inline font-medium">Received: </dt><dd className="inline">{formatReceived(e.receivedAt)}</dd></div>
-              <div><dt className="inline font-medium">Status: </dt><dd className="inline">{e.status}</dd></div>
-              <div><dt className="inline font-medium">Assigned: </dt><dd className="inline">{e.assignedTo ?? "Unassigned"}</dd></div>
+              <div>
+                <dt className="inline font-medium">Received: </dt>
+                <dd className="inline">{formatReceived(enquiry.receivedAt)}</dd>
+              </div>
+              <div>
+                <dt className="inline font-medium">Status: </dt>
+                <dd className="inline">{enquiry.status}</dd>
+              </div>
+              <div>
+                <dt className="inline font-medium">Assigned: </dt>
+                <dd className="inline">{enquiry.assignedTo ?? "Unassigned"}</dd>
+              </div>
             </dl>
           </li>
         ))}
