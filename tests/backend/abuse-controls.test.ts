@@ -98,7 +98,11 @@ test("Turnstile rejects unsuccessful or mismatched verification", async () => {
   );
 
   const mismatchFetch: typeof fetch = async () =>
-    Response.json({ success: true, action: "wrong-action", hostname: "intake.example.test" });
+    Response.json({
+      success: true,
+      action: "wrong-action",
+      hostname: "intake.example.test",
+    });
   await assert.rejects(
     verifyTurnstileToken({
       token: "valid-looking-token",
