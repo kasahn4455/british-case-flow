@@ -8,20 +8,29 @@ export function EnquiryTable({ enquiries }: { enquiries: LiveEnquirySummary[] })
       <table className="hidden w-full text-left text-sm md:table">
         <thead>
           <tr className="border-b border-border text-xs uppercase tracking-[0.1em] text-muted-foreground">
-            <th scope="col" className="px-4 py-3 font-semibold">Enquiry ID</th>
-            <th scope="col" className="px-4 py-3 font-semibold">Received</th>
-            <th scope="col" className="px-4 py-3 font-semibold">Priority</th>
-            <th scope="col" className="px-4 py-3 font-semibold">Category</th>
-            <th scope="col" className="px-4 py-3 font-semibold">Status</th>
-            <th scope="col" className="px-4 py-3 font-semibold">Assigned staff</th>
+            <th scope="col" className="px-4 py-3 font-semibold">
+              Enquiry ID
+            </th>
+            <th scope="col" className="px-4 py-3 font-semibold">
+              Received
+            </th>
+            <th scope="col" className="px-4 py-3 font-semibold">
+              Priority
+            </th>
+            <th scope="col" className="px-4 py-3 font-semibold">
+              Category
+            </th>
+            <th scope="col" className="px-4 py-3 font-semibold">
+              Status
+            </th>
+            <th scope="col" className="px-4 py-3 font-semibold">
+              Assigned staff
+            </th>
           </tr>
         </thead>
         <tbody>
           {enquiries.map((enquiry) => (
-            <tr
-              key={enquiry.id}
-              className="border-b border-border last:border-0 hover:bg-muted/60"
-            >
+            <tr key={enquiry.id} className="border-b border-border last:border-0 hover:bg-muted/60">
               <td className="px-4 py-3 font-medium">
                 <Link
                   to="/app/enquiries/$id"
