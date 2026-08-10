@@ -10,9 +10,9 @@ This layer protects the future `/api/intake/:publishedFormId` transport without 
 2. Read the trusted Cloudflare `CF-Connecting-IP` header. There is no `X-Forwarded-For` fallback.
 3. Reuse or issue an opaque `intake_session` HttpOnly/Secure/SameSite=Lax cookie.
 4. HMAC-SHA256 the IP and session identifiers with `INTAKE_ABUSE_PEPPER`; raw identifiers are not sent to Postgres.
-5. Execute the durable per-form IP/session rate-limit RPC.
-6. Verify the `x-turnstile-token` server-side with Cloudflare Siteverify, including expected action/hostname when configured.
-7. Only after those transport checks pass does the existing v5.2 structural/semantic/routing pipeline run.
+5. Verify the `x-turnstile-token` server-side with Cloudflare Siteverify, including expected action/hostname when configured.
+6. Only a challenge-verified request consumes the durable per-form IP/session submission quota. This prevents invalid bot traffic from exhausting a shared human/NAT bucket.
+7. After those transport checks pass, the existing v5.2 structural/semantic/routing pipeline runs.
 8. Atomic persistence suppresses identical retry/double-click submissions during a ten-minute window.
 
 ## Environment
