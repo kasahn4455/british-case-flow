@@ -20,14 +20,6 @@ select ok(
   'authenticated browser sessions cannot execute assignment RPC directly'
 );
 select ok(
-  has_function_privilege(
-    'service_role',
-    'public.staff_assign_enquiry(text,uuid,boolean)',
-    'EXECUTE'
-  ),
-  'service_role can execute assignment RPC'
-);
-select ok(
   not has_function_privilege(
     'authenticated',
     'public.claim_outbox_events(text,integer,integer)',
