@@ -8,8 +8,8 @@ import {
   LOCATIONS,
   YES_NO_NOT_SURE,
   labelFor,
-} from "./options";
-import type { DateAnswer, IntakeFormValues } from "./schema";
+} from "./options.ts";
+import type { DateAnswer, IntakeFormValues } from "./schema.ts";
 
 export type CanonicalSubmissionPayload = {
   full_name: string;
@@ -45,7 +45,7 @@ export type CanonicalSubmissionPayload = {
   website?: string;
 };
 
-const URGENCY_TO_CANONICAL: Record<string, string> = {
+const URGENCY_TO_CANONICAL = {
   visa_expiry: "visa_expiring",
   ho_decision: "decision_received",
   given_deadline: "deadline_given",
@@ -54,14 +54,30 @@ const URGENCY_TO_CANONICAL: Record<string, string> = {
   removal_date: "removal_date",
   none: "none",
   not_sure: "not_sure",
-};
+} as const;
 
-const DATE_KNOWN_TO_CANONICAL: Record<string, string> = {
+const DATE_KNOWN_TO_CANONICAL = {
   yes: "Yes, I know the exact date",
   no: "No / not sure",
-};
+} as const;
 
-function addOptionalText(target: CanonicalSubmissionPayload, key: keyof CanonicalSubmissionPayload, value: string) {
+function mapUrgency(value: string): string {
+  const mapped = URGENCY_TO_CANONICAL[value as keyof typeof URGENCY_TO_CANONICAL];
+  if (!mapped) throw new Error("Invalid urgency selection");
+  return mapped;
+}
+
+function mapDateKnown(value: string): string {
+  const mapped = DATE_KNOWN_TO_CANONICAL[value as keyof typeof DATE_KNOWN_TO_CANONICAL];
+  if (!mapped) throw new Error("Invalid date-known selection");
+  return mapped;
+}
+
+function addOptionalText(
+  target: CanonicalSubmissionPayload,
+  key: keyof CanonicalSubmissionPayload,
+  value: string,
+) {
   const trimmed = value.trim();
   if (trimmed) Object.assign(target, { [key]: trimmed });
 }
@@ -74,7 +90,7 @@ function addDate(
   canonicalDateField: string,
 ) {
   if (!answer.knowsExact) return;
-  Object.assign(target, { [knownField]: DATE_KNOWN_TO_CANONICAL[answer.knowsExact] });
+  Object.assign(target, { [knownField]: mapDateKnown(answer.knowsExact) });
   if (answer.knowsExact !== "yes" || !answer.date) return;
   Object.assign(target, { [dateField]: answer.date });
   if (answer.pastConfirmed === "yes") {
@@ -98,7 +114,7 @@ export function toCanonicalSubmission(
     preferred_contact_method: labelFor(CONTACT_METHODS, values.contactMethod),
     category: labelFor(CATEGORIES, values.category),
     location_status: labelFor(LOCATIONS, values.location),
-    urgency_flags: values.urgency.map((value) => URGENCY_TO_CANONICAL[value]),
+    urgency_flags: values.urgency.map(mapUrgency),
     past_date_confirmations: {},
     existing_representative: labelFor(EXISTING_REP_OPTIONS, values.existingRepresentative),
     privacy_notice_version: options.privacyNoticeVersion,
