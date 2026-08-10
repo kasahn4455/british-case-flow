@@ -3,7 +3,10 @@ import test from "node:test";
 
 import { toCanonicalSubmission } from "../../src/lib/intake/canonical-submission.ts";
 import { emptyIntakeForm, type IntakeFormValues } from "../../src/lib/intake/schema.ts";
-import { deriveFacts, conditionalValidateSubmission } from "../../src/server/intake-v52/semantics.ts";
+import {
+  deriveFacts,
+  conditionalValidateSubmission,
+} from "../../src/server/intake-v52/semantics.ts";
 import { baseValidateSubmission } from "../../src/server/intake-v52/validation.ts";
 
 function baseValues(): IntakeFormValues {
