@@ -1,0 +1,77 @@
+name: Phase 2 verification
+
+on:
+  pull_request:
+    paths:
+      - "src/server/intake-v52/**"
+      - "src/routes/api.intake.$publishedFormId.ts"
+      - "tests/backend/**"
+      - "supabase/**"
+      - "package.json"
+      - ".github/workflows/phase2-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Backend tests
+        run: npm run test:backend
+
+      # TanStack's Vite plugin owns src/routeTree.gen.ts. A bare tsc run on a fresh
+      # checkout can see a stale generated tree after a route file is added, so build
+      # first to regenerate the file-route types, then run the full compiler check.
+      - name: Production build and route generation
+        run: npm run build
+
+      - name: TypeScript
+        run: npx tsc --noEmit
+
+      - name: Lint Phase 2 files
+        run: >-
+          npx eslint
+          src/server/intake-v52
+          'src/routes/api.intake.$publishedFormId.ts'
+          tests/backend
+
+  database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v2
+        with:
+          version: latest
+          github-token: ${{ github.token }}
+
+      - name: Initialize local Supabase config
+        run: supabase init --force
+
+      - name: Start disposable database and apply migrations
+        run: supabase db start
+
+      - name: Lint Postgres functions
+        run: supabase db lint --local --level error --fail-on error
+
+      - name: Database integration tests
+        run: supabase test db
