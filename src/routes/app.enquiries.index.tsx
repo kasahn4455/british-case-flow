@@ -30,12 +30,10 @@ function EnquiriesDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-serif text-2xl font-semibold text-foreground sm:text-3xl">
-          Enquiries
-        </h1>
+        <h1 className="font-serif text-2xl font-semibold text-foreground sm:text-3xl">Enquiries</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Live tenant-scoped records from Supabase. Priority values shown here were persisted by
-          the authoritative v5.2 server routing pipeline; nothing on this screen calculates legal
+          Live tenant-scoped records from Supabase. Priority values shown here were persisted by the
+          authoritative v5.2 server routing pipeline; nothing on this screen calculates legal
           deadlines or priority in the browser.
         </p>
       </div>
