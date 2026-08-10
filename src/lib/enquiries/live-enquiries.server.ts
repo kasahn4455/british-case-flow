@@ -36,7 +36,12 @@ const DETAIL_SELECT = [
 
 export async function readEnquiryQueueForFirm(
   firmId: string,
-): Promise<{ enquiries: LiveEnquirySummary[]; counts: PriorityCounts }> {
+): Promise<{
+  enquiries: LiveEnquirySummary[];
+  counts: PriorityCounts;
+  totalCount: number;
+  hasMore: boolean;
+}> {
   const supabase = createSupabaseServerClient();
 
   const [{ data, error }, countResults] = await Promise.all([
@@ -64,9 +69,14 @@ export async function readEnquiryQueueForFirm(
   const counts = emptyPriorityCounts();
   for (const [priority, count] of countResults) counts[priority] = count;
 
+  const enquiries = ((data ?? []) as unknown as EnquirySummaryRow[]).map(mapEnquirySummaryRow);
+  const totalCount = PRIORITY_ORDER.reduce((total, priority) => total + counts[priority], 0);
+
   return {
-    enquiries: ((data ?? []) as unknown as EnquirySummaryRow[]).map(mapEnquirySummaryRow),
+    enquiries,
     counts,
+    totalCount,
+    hasMore: totalCount > enquiries.length,
   };
 }
 
