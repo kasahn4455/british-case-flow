@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-const TURNSTILE_SITEVERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+const TURNSTILE_SITEVERIFY_URL =
+  "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 const TOKEN_MAX_LENGTH = 2048;
 const VERIFY_TIMEOUT_MS = 5_000;
 
