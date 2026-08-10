@@ -1,10 +1,6 @@
 export type Priority = "CRITICAL" | "URGENT" | "PRIORITY" | "MANUAL_REVIEW" | "ROUTINE";
 export type DatabaseEnquiryStatus =
-  | "NEW"
-  | "IN_REVIEW"
-  | "CONTACTED"
-  | "AWAITING_CLIENT"
-  | "CLOSED";
+  "NEW" | "IN_REVIEW" | "CONTACTED" | "AWAITING_CLIENT" | "CLOSED";
 export type PriorityCounts = Record<Priority, number>;
 
 export const PRIORITY_ORDER: Priority[] = [
