@@ -104,12 +104,9 @@ The configured delivery webhook can be n8n or another approved processor. That p
 
 ## Operational cleanup
 
-`/api/workers/maintenance` calls a service-role-only cleanup RPC that removes:
+`/api/workers/maintenance` calls a service-role-only cleanup RPC that automatically removes only ephemeral intake rate-limit windows older than 48 hours.
 
-- intake rate-limit windows older than 48 hours;
-- security-event records older than 90 days.
-
-This deliberately does **not** auto-delete enquiries or audit history. Client-data retention/deletion remains a production compliance decision tied to each firm's approved retention policy; the code does not silently invent that policy.
+It **does not automatically delete** security events, enquiries, contact logs, audit history or other client-linked records. Their retention periods are policy/compliance decisions that must be approved for the relevant firm; the code deliberately does not invent a duration. The maintenance response explicitly reports that security-event retention remains deferred.
 
 ## Staff workspace state
 
@@ -159,5 +156,5 @@ Database tests include:
 - A real staff Auth account must be provisioned and TOTP enrolment/challenge verified in the deployed app.
 - A real scheduler must invoke the protected outbox and maintenance endpoints on an approved cadence.
 - A trusted delivery processor must be configured and tested for the final email/SMS transports.
-- Firm-specific client-data retention/deletion rules still require compliance approval before automation.
+- Firm-specific client/security/audit retention and deletion rules still require compliance approval before automation.
 - Production privacy/compliance/security sign-off is required before accepting real client information.
