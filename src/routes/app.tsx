@@ -1,9 +1,9 @@
 import { createFileRoute, Link, Outlet, redirect, useRouterState } from "@tanstack/react-router";
 
 import { StaffSignOutButton } from "@/components/staff/StaffSignOutButton";
+import { getStaffAuthState } from "@/lib/auth/staff-auth.functions";
 import { getStaffDestination } from "@/lib/auth/staff-auth-state";
 import { DEMO_MODE_LABEL, FIRM } from "@/lib/mock/firm";
-import { getStaffAuthState } from "@/server/auth/staff-auth.server";
 
 export const Route = createFileRoute("/app")({
   head: () => ({
