@@ -64,7 +64,9 @@ function MfaSetupPage() {
       });
     } catch (caught) {
       console.error(caught);
-      setError("Authenticator setup could not be started. Sign in again or contact your administrator.");
+      setError(
+        "Authenticator setup could not be started. Sign in again or contact your administrator.",
+      );
     } finally {
       setBusy(false);
     }
@@ -119,11 +121,15 @@ function MfaSetupPage() {
           Set up multi-factor authentication
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Staff enquiry access requires an authenticator app. This is mandatory for every staff account.
+          Staff enquiry access requires an authenticator app. This is mandatory for every staff
+          account.
         </p>
 
         {error ? (
-          <p role="alert" className="mt-4 rounded-md border border-destructive/40 px-3 py-3 text-sm text-destructive">
+          <p
+            role="alert"
+            className="mt-4 rounded-md border border-destructive/40 px-3 py-3 text-sm text-destructive"
+          >
             {error}
           </p>
         ) : null}
