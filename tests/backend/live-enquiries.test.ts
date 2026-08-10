@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   emptyPriorityCounts,
   extractProspectStatedDates,
+  mapContactLogRow,
   mapEnquiryDetailRow,
   mapEnquirySummaryRow,
   type EnquiryDetailRow,
@@ -27,6 +28,7 @@ test("live queue mapper preserves authoritative persisted fields", () => {
   assert.equal(mapped.id, "IM-TEST-001");
   assert.equal(mapped.priority, "URGENT");
   assert.equal(mapped.status, "In review");
+  assert.equal(mapped.statusCode, "IN_REVIEW");
   assert.equal(mapped.assignedTo, null);
   assert.deepEqual(mapped.contactPreference, { method: "Email", time: "Not specified" });
 });
@@ -80,4 +82,26 @@ test("detail mapper returns real prospect, conflict and routing fields", () => {
   assert.equal(mapped.conflictCheck.existingRepresentative, "No");
   assert.deepEqual(mapped.matchedRuleIds, ["URGENT_DECISION_NO_DEADLINE"]);
   assert.equal(mapped.priorityReason, "Matched URGENT_DECISION_NO_DEADLINE");
+  assert.deepEqual(mapped.contactHistory, []);
+});
+
+test("contact history mapper preserves only persisted contact facts", () => {
+  assert.deepEqual(
+    mapContactLogRow({
+      id: "70000000-0000-0000-0000-000000000001",
+      channel: "PHONE",
+      direction: "OUTBOUND",
+      outcome: "Voicemail left",
+      notes: "No legal advice provided.",
+      contacted_at: "2026-08-10T10:00:00.000Z",
+    }),
+    {
+      id: "70000000-0000-0000-0000-000000000001",
+      channel: "PHONE",
+      direction: "OUTBOUND",
+      outcome: "Voicemail left",
+      notes: "No legal advice provided.",
+      contactedAt: "2026-08-10T10:00:00.000Z",
+    },
+  );
 });
