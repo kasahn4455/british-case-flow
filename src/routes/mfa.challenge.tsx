@@ -1,10 +1,10 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
+import { getStaffAuthState } from "@/lib/auth/staff-auth.functions";
 import { getStaffDestination } from "@/lib/auth/staff-auth-state";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { FIRM } from "@/lib/mock/firm";
-import { getStaffAuthState } from "@/server/auth/staff-auth.server";
 
 export const Route = createFileRoute("/mfa/challenge")({
   head: () => ({
