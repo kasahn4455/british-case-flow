@@ -2,10 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { readStaffAuthState } from "@/lib/auth/staff-auth.server";
+import { resolveEnquiryIdForFirm } from "./live-enquiries.server";
 import { applyBrokeredPriorityOverride } from "./priority-override.server";
 
 const overrideInputSchema = z.object({
-  enquiryId: z.string().uuid(),
+  publicReference: z.string().trim().min(1).max(120),
   newPriority: z.enum(["CRITICAL", "URGENT", "PRIORITY", "MANUAL_REVIEW", "ROUTINE"]),
   reason: z.string().trim().min(10).max(1000),
 });
@@ -13,8 +14,8 @@ const overrideInputSchema = z.object({
 /**
  * Staff mutation boundary. This is intentionally a TanStack server function so
  * the app's same-origin CSRF middleware applies before any service-role RPC call.
- * The actor UUID is always derived from the verified Supabase session; it is never
- * accepted from browser input.
+ * Browser input contains only the public reference; tenant scoping resolves the
+ * internal enquiry UUID and the actor UUID always comes from the verified session.
  */
 export const overrideEnquiryPriority = createServerFn({ method: "POST" })
   .validator(overrideInputSchema)
@@ -28,8 +29,11 @@ export const overrideEnquiryPriority = createServerFn({ method: "POST" })
       throw new Error("A verified AAL2 staff session is required");
     }
 
+    const enquiryId = await resolveEnquiryIdForFirm(authState.firmId, data.publicReference);
+    if (!enquiryId) throw new Error("Enquiry not found");
+
     return applyBrokeredPriorityOverride({
-      enquiryId: data.enquiryId,
+      enquiryId,
       newPriority: data.newPriority,
       reason: data.reason,
       actorUserId: authState.userId,
