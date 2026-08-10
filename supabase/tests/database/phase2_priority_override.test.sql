@@ -124,6 +124,16 @@ select * from public.persist_intake_submission_v52(
   'v5.2'
 );
 
+select set_config(
+  'test.override_enquiry_id',
+  (
+    select id::text
+    from public.enquiries
+    where firm_id = '41000000-0000-0000-0000-000000000001'
+  ),
+  true
+);
+
 set local role service_role;
 
 select ok(
@@ -134,7 +144,7 @@ select ok(
 select lives_ok(
   $$
     select public.override_enquiry_priority(
-      (select id from public.enquiries where firm_id = '41000000-0000-0000-0000-000000000001'),
+      current_setting('test.override_enquiry_id')::uuid,
       'URGENT'::public.enquiry_priority,
       'Staff escalation after human review',
       '40000000-0000-0000-0000-000000000001'
@@ -181,7 +191,7 @@ set local role service_role;
 select throws_ok(
   $$
     select public.override_enquiry_priority(
-      (select id from public.enquiries where firm_id = '41000000-0000-0000-0000-000000000001'),
+      current_setting('test.override_enquiry_id')::uuid,
       'ROUTINE'::public.enquiry_priority,
       'Attempted staff de-escalation after review',
       '40000000-0000-0000-0000-000000000001'
@@ -202,7 +212,7 @@ set local role service_role;
 select lives_ok(
   $$
     select public.override_enquiry_priority(
-      (select id from public.enquiries where firm_id = '41000000-0000-0000-0000-000000000001'),
+      current_setting('test.override_enquiry_id')::uuid,
       'ROUTINE'::public.enquiry_priority,
       'Senior de-escalation after documented review',
       '40000000-0000-0000-0000-000000000001'
@@ -224,7 +234,7 @@ set local role service_role;
 select throws_ok(
   $$
     select public.override_enquiry_priority(
-      (select id from public.enquiries where firm_id = '41000000-0000-0000-0000-000000000001'),
+      current_setting('test.override_enquiry_id')::uuid,
       'URGENT'::public.enquiry_priority,
       'Unknown actor attempt after human review',
       '40000000-0000-0000-0000-000000000099'
