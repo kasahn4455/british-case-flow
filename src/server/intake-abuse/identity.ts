@@ -1,7 +1,6 @@
 const SESSION_COOKIE_NAME = "intake_session";
 const SESSION_MAX_AGE_SECONDS = 24 * 60 * 60;
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const TRUSTED_IP_RE = /^[0-9a-fA-F:.]{3,64}$/;
 
 export class TrustedClientIpUnavailableError extends Error {
