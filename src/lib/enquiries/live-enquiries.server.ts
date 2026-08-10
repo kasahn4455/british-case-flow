@@ -94,3 +94,19 @@ export async function readEnquiryDetailForFirm(
   if (!data) return null;
   return mapEnquiryDetailRow(data as unknown as EnquiryDetailRow);
 }
+
+export async function resolveEnquiryIdForFirm(
+  firmId: string,
+  publicReference: string,
+): Promise<string | null> {
+  const supabase = createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("enquiries")
+    .select("id")
+    .eq("firm_id", firmId)
+    .eq("public_reference", publicReference)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data?.id ?? null;
+}
