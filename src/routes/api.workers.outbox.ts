@@ -54,7 +54,9 @@ export const Route = createFileRoute("/api/workers/outbox")({
                 await failOutboxEvent(event.event_id, workerId);
               } catch (databaseError) {
                 console.error(
-                  databaseError instanceof Error ? databaseError.message : "Outbox fail update error",
+                  databaseError instanceof Error
+                    ? databaseError.message
+                    : "Outbox fail update error",
                 );
               }
               failed += 1;
