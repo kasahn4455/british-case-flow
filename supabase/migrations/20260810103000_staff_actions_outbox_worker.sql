@@ -32,6 +32,14 @@ create policy contact_logs_staff_select on public.contact_logs
     and (select private.has_firm_access(contact_logs.firm_id))
   );
 
+alter table public.outbox_events
+  add column if not exists lease_owner text,
+  add column if not exists lease_expires_at timestamptz;
+
+create index if not exists outbox_events_delivery_due_idx
+  on public.outbox_events(delivery_status, next_attempt_at, created_at)
+  where dead_letter_status = false;
+
 create or replace function public.staff_assign_enquiry(
   p_public_reference text,
   p_actor_user_id uuid,
@@ -142,7 +150,6 @@ set search_path = pg_catalog, public
 as $$
 declare
   v_enquiry public.enquiries%rowtype;
-  v_role public.staff_role;
   v_previous public.enquiry_status;
   v_result public.enquiries%rowtype;
 begin
@@ -159,13 +166,13 @@ begin
     raise exception 'Enquiry not found';
   end if;
 
-  select role into v_role
-  from public.staff_memberships
-  where firm_id = v_enquiry.firm_id
-    and auth_user_id = p_actor_user_id
-    and status = 'active'::public.membership_status;
-
-  if not found then
+  if not exists (
+    select 1
+    from public.staff_memberships sm
+    where sm.firm_id = v_enquiry.firm_id
+      and sm.auth_user_id = p_actor_user_id
+      and sm.status = 'active'::public.membership_status
+  ) then
     raise exception 'Firm access denied';
   end if;
 
@@ -222,7 +229,6 @@ begin
   if p_actor_user_id is null then
     raise exception 'Verified actor is required';
   end if;
-
   if upper(trim(p_channel)) not in ('PHONE','EMAIL','SMS','OTHER') then
     raise exception 'Invalid contact channel';
   end if;
@@ -300,7 +306,7 @@ begin
 end;
 $$;
 
--- Claim due outbox rows atomically. Stale PROCESSING leases become claimable again.
+-- Claim due outbox rows atomically. Expired PROCESSING leases become claimable again.
 create or replace function public.claim_outbox_events(
   p_worker_id text,
   p_limit integer default 25,
@@ -332,7 +338,8 @@ begin
           and (oe.next_attempt_at is null or oe.next_attempt_at <= now()))
         or
         (oe.delivery_status = 'PROCESSING'::public.outbox_delivery_status
-          and oe.last_attempt_at <= now() - make_interval(secs => p_lease_seconds))
+          and oe.lease_expires_at is not null
+          and oe.lease_expires_at <= now())
       )
     order by oe.created_at
     for update skip locked
@@ -343,7 +350,8 @@ begin
       retry_count = oe.retry_count + 1,
       last_attempt_at = now(),
       next_attempt_at = null,
-      payload = oe.payload || jsonb_build_object('_worker_claim', trim(p_worker_id))
+      lease_owner = trim(p_worker_id),
+      lease_expires_at = now() + make_interval(secs => p_lease_seconds)
   from candidates c
   where oe.event_id = c.event_id
   returning oe.*;
@@ -365,10 +373,11 @@ begin
       delivered_at = now(),
       next_attempt_at = null,
       dead_letter_status = false,
-      payload = payload - '_worker_claim'
+      lease_owner = null,
+      lease_expires_at = null
   where event_id = p_event_id
     and delivery_status = 'PROCESSING'::public.outbox_delivery_status
-    and payload->>'_worker_claim' = trim(p_worker_id);
+    and lease_owner = trim(p_worker_id);
 
   if not found then
     raise exception 'Outbox claim not found';
@@ -397,7 +406,7 @@ begin
   from public.outbox_events
   where event_id = p_event_id
     and delivery_status = 'PROCESSING'::public.outbox_delivery_status
-    and payload->>'_worker_claim' = trim(p_worker_id)
+    and lease_owner = trim(p_worker_id)
   for update;
 
   if not found then
@@ -409,9 +418,10 @@ begin
       dead_letter_status = v_retry >= p_max_attempts,
       next_attempt_at = case
         when v_retry >= p_max_attempts then null
-        else now() + make_interval(secs => least(3600, 30 * (2 ^ least(v_retry - 1, 7)))::integer)
+        else now() + make_interval(secs => least(3600, 30 * power(2, least(v_retry - 1, 7)))::integer)
       end,
-      payload = payload - '_worker_claim'
+      lease_owner = null,
+      lease_expires_at = null
   where event_id = p_event_id;
 end;
 $$;
