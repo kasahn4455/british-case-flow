@@ -6,11 +6,14 @@ on:
       - "src/server/intake-v52/**"
       - "src/server/intake-abuse/**"
       - "src/components/intake/TurnstileField.tsx"
+      - "src/lib/auth/**"
+      - "src/lib/enquiries/**"
       - "src/lib/intake/canonical-submission.ts"
       - "src/lib/mock/firm.ts"
       - "src/routes/index.tsx"
       - "src/routes/intake.$publishedFormId.index.tsx"
       - "src/routes/api.intake.$publishedFormId.ts"
+      - "src/start.ts"
       - "tests/backend/**"
       - "supabase/**"
       - "package.json"
@@ -54,26 +57,16 @@ jobs:
           npx eslint
           src/server/intake-v52
           src/server/intake-abuse
+          src/lib/auth
+          src/lib/enquiries
           src/components/intake/TurnstileField.tsx
           src/lib/intake/canonical-submission.ts
           src/lib/mock/firm.ts
           src/routes/index.tsx
           'src/routes/intake.$publishedFormId.index.tsx'
           'src/routes/api.intake.$publishedFormId.ts'
+          src/start.ts
           tests/backend
-
-      - name: Package full source snapshot
-        run: >-
-          zip -qr british-case-flow-full-latest.zip .
-          -x '.git/*' 'node_modules/*' '.output/*' '.wrangler/*'
-
-      - name: Upload full source ZIP
-        uses: actions/upload-artifact@v4
-        with:
-          name: british-case-flow-full-latest
-          path: british-case-flow-full-latest.zip
-          if-no-files-found: error
-          retention-days: 7
 
   database:
     runs-on: ubuntu-latest
