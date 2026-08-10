@@ -19,6 +19,8 @@ import {
 } from "@/lib/intake/options";
 import {
   detailsSchema,
+  isBeforeToday,
+  isValidDateString,
   emptyDateAnswer,
   emptyIntakeForm,
   type DateAnswer,
@@ -57,6 +59,7 @@ export const Route = createFileRoute("/intake/$publishedFormId/")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: IntakeForm,
@@ -119,6 +122,7 @@ function IntakeForm() {
     }
     if (showLetterDeadlineQuestion(v) && !v.letterDeadlineStated)
       found["letterDeadlineStated"] = "Select an option";
+    if (!v.existingRepresentative) found["existingRepresentative"] = "Select an option";
 
     const dateChecks: [DateKey, boolean][] = [
       ["visaExpiry", showVisaExpiryDate(v)],
@@ -130,9 +134,22 @@ function IntakeForm() {
     for (const [key, visible] of dateChecks) {
       if (!visible) continue;
       const answer = v.dates[key];
-      if (!answer.knowsExact) found[`dates.${key}`] = "Select an option";
-      else if (answer.knowsExact === "yes" && !answer.date)
+      if (!answer.knowsExact) {
+        found[`dates.${key}`] = "Select an option";
+        continue;
+      }
+      if (answer.knowsExact !== "yes") continue;
+      if (!answer.date) {
         found[`dates.${key}`] = "Enter the date";
+        continue;
+      }
+      if (!isValidDateString(answer.date)) {
+        found[`dates.${key}`] = "Enter a valid date";
+        continue;
+      }
+      if (isBeforeToday(answer.date) && answer.pastConfirmed !== "yes") {
+        found[`dates.${key}`] = "Confirm whether the past date you entered is correct";
+      }
     }
     return found;
   };
@@ -188,7 +205,7 @@ function IntakeForm() {
             value={values.fullName}
             onChange={(v) => set("fullName", v)}
             error={errors["fullName"]}
-            maxLength={120}
+            maxLength={150}
             autoComplete="name"
           />
           <TextField
@@ -197,7 +214,7 @@ function IntakeForm() {
             value={values.email}
             onChange={(v) => set("email", v)}
             error={errors["email"]}
-            maxLength={200}
+            maxLength={254}
             autoComplete="email"
           />
           <TextField
@@ -206,7 +223,7 @@ function IntakeForm() {
             value={values.phone}
             onChange={(v) => set("phone", v)}
             error={errors["phone"]}
-            maxLength={40}
+            maxLength={20}
             autoComplete="tel"
           />
           <RadioGroupField
@@ -218,7 +235,7 @@ function IntakeForm() {
             columns={2}
           />
           <RadioGroupField
-            legend="Preferred contact time"
+            legend="Preferred contact time (optional)"
             options={CONTACT_TIMES}
             value={values.contactTime}
             onChange={(v) => set("contactTime", v)}
@@ -379,6 +396,7 @@ function IntakeForm() {
             options={EXISTING_REP_OPTIONS}
             value={values.existingRepresentative}
             onChange={(v) => set("existingRepresentative", v)}
+            error={errors["existingRepresentative"]}
             columns={2}
           />
         </SectionCard>
