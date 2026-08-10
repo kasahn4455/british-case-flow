@@ -34,9 +34,7 @@ const DETAIL_SELECT = [
   "conflict_check_state",
 ].join(",");
 
-export async function readEnquiryQueueForFirm(
-  firmId: string,
-): Promise<{
+export async function readEnquiryQueueForFirm(firmId: string): Promise<{
   enquiries: LiveEnquirySummary[];
   counts: PriorityCounts;
   totalCount: number;
