@@ -7,7 +7,6 @@ on:
       - "src/routes/api.intake.$publishedFormId.ts"
       - "src/lib/auth/**"
       - "src/lib/supabase/**"
-      - "src/server/auth/**"
       - "src/routes/login.tsx"
       - "src/routes/mfa.*.tsx"
       - "src/routes/app.tsx"
@@ -57,7 +56,6 @@ jobs:
           'src/routes/api.intake.$publishedFormId.ts'
           src/lib/auth
           src/lib/supabase
-          src/server/auth
           src/routes/login.tsx
           'src/routes/mfa.setup.tsx'
           'src/routes/mfa.challenge.tsx'
