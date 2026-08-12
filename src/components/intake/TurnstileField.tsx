@@ -13,9 +13,11 @@ type TurnstileApi = {
       action: string;
       theme: "auto";
       size: "flexible";
+      retry: "auto";
+      "retry-interval": number;
       callback: (token: string) => void;
       "expired-callback": () => void;
-      "error-callback": () => void;
+      "error-callback": (errorCode: string) => boolean;
     },
   ) => TurnstileWidgetId;
   reset: (widgetId: TurnstileWidgetId) => void;
@@ -32,6 +34,12 @@ const SCRIPT_ID = "cloudflare-turnstile-explicit";
 const SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 
 let scriptPromise: Promise<void> | null = null;
+
+function clearFailedScript() {
+  const existing = document.getElementById(SCRIPT_ID);
+  existing?.remove();
+  scriptPromise = null;
+}
 
 function loadTurnstileScript(): Promise<void> {
   if (window.turnstile) return Promise.resolve();
@@ -57,9 +65,25 @@ function loadTurnstileScript(): Promise<void> {
     script.onload = () => resolve();
     script.onerror = () => reject(new Error("Turnstile script failed to load"));
     document.head.appendChild(script);
+  }).catch((error) => {
+    clearFailedScript();
+    throw error;
   });
 
   return scriptPromise;
+}
+
+function turnstileErrorMessage(errorCode: string) {
+  if (errorCode === "110100" || errorCode === "110110" || errorCode === "400020") {
+    return `Human verification is misconfigured (Cloudflare ${errorCode}). Please contact support.`;
+  }
+  if (errorCode === "110200") {
+    return `This domain is not authorised for human verification (Cloudflare ${errorCode}).`;
+  }
+  if (errorCode === "200500") {
+    return `Human verification was blocked from loading (Cloudflare ${errorCode}). Disable content blockers or try another network, then retry.`;
+  }
+  return `Human verification failed (Cloudflare ${errorCode}). Please retry or use another browser/network.`;
 }
 
 export function TurnstileField({
@@ -72,11 +96,13 @@ export function TurnstileField({
   const siteKey = import.meta.env["VITE_TURNSTILE_SITE_KEY"] as string | undefined;
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<TurnstileWidgetId | null>(null);
-  const [loadError, setLoadError] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     if (!siteKey) return;
     let disposed = false;
+    setLoadError("");
 
     loadTurnstileScript()
       .then(() => {
@@ -88,19 +114,26 @@ export function TurnstileField({
             action: "intake-submit",
             theme: "auto",
             size: "flexible",
+            retry: "auto",
+            "retry-interval": 5000,
             callback: (token) => {
-              setLoadError(false);
+              setLoadError("");
               onTokenChange(token);
             },
             "expired-callback": () => onTokenChange(""),
-            "error-callback": () => {
+            "error-callback": (errorCode) => {
               onTokenChange("");
-              setLoadError(true);
+              setLoadError(turnstileErrorMessage(errorCode));
+              return true;
             },
           });
         });
       })
-      .catch(() => setLoadError(true));
+      .catch(() => {
+        setLoadError(
+          "Human verification script could not be loaded. Disable content blockers or try another network, then retry.",
+        );
+      });
 
     return () => {
       disposed = true;
@@ -109,7 +142,7 @@ export function TurnstileField({
       }
       widgetIdRef.current = null;
     };
-  }, [siteKey, onTokenChange]);
+  }, [siteKey, onTokenChange, retryKey]);
 
   useEffect(() => {
     onTokenChange("");
@@ -133,9 +166,22 @@ export function TurnstileField({
     <div>
       <div ref={containerRef} aria-label="Human verification" />
       {loadError ? (
-        <p role="alert" className="mt-2 text-sm text-destructive">
-          Human verification could not be loaded. Please refresh and try again.
-        </p>
+        <div className="mt-2 space-y-2">
+          <p role="alert" className="text-sm text-destructive">
+            {loadError}
+          </p>
+          <button
+            type="button"
+            className="rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground"
+            onClick={() => {
+              onTokenChange("");
+              if (!window.turnstile) clearFailedScript();
+              setRetryKey((value) => value + 1);
+            }}
+          >
+            Retry human verification
+          </button>
+        </div>
       ) : null}
     </div>
   );
