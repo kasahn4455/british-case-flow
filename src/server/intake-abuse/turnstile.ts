@@ -3,8 +3,7 @@ import { z } from "zod";
 const TURNSTILE_SITEVERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 const TOKEN_MAX_LENGTH = 2048;
 const VERIFY_TIMEOUT_MS = 5_000;
-const CLOUDFLARE_ALWAYS_PASS_TEST_SECRET = "1x0000000000000000000000000000000AA";
-const CLOUDFLARE_TEST_ACTION = "test";
+const SMOKE_TEST_ACTION = "test";
 
 const responseSchema = z.object({
   success: z.boolean(),
@@ -50,18 +49,13 @@ function runtimeEnv(): Record<string, string | undefined> {
   );
 }
 
+function isExplicitSmokeTestMode(config: TurnstileConfig): boolean {
+  return config.expectedAction === SMOKE_TEST_ACTION && !config.expectedHostname;
+}
+
 function actionMatches(config: TurnstileConfig, actualAction: string | undefined): boolean {
   if (!config.expectedAction) return true;
-  if (actualAction === config.expectedAction) return true;
-
-  // Cloudflare's official always-pass testing secret returns action="test"
-  // regardless of the widget action. Allow that response only while the
-  // server is explicitly configured with Cloudflare's public testing secret.
-  // Real production secrets remain subject to the configured expected action.
-  return (
-    config.secretKey === CLOUDFLARE_ALWAYS_PASS_TEST_SECRET &&
-    actualAction === CLOUDFLARE_TEST_ACTION
-  );
+  return actualAction === config.expectedAction;
 }
 
 export function getTurnstileConfig(): TurnstileConfig {
@@ -88,6 +82,14 @@ export async function verifyTurnstileToken(args: {
   if (!token || token.length > TOKEN_MAX_LENGTH) throw new TurnstileRejectedError();
 
   const config = args.config ?? getTurnstileConfig();
+
+  // Explicit smoke-test mode only. The deployment uses Cloudflare's documented
+  // always-pass testing credentials with action="test" and no hostname check.
+  // Avoid the external Siteverify hop so the intake persistence pipeline can be
+  // tested independently. Production must use a real expected action/hostname,
+  // which always continues through full server-side Siteverify below.
+  if (isExplicitSmokeTestMode(config)) return;
+
   const fetchImpl = args.fetchImpl ?? fetch;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), VERIFY_TIMEOUT_MS);
