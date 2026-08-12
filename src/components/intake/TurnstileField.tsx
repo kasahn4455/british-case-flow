@@ -95,7 +95,7 @@ export function TurnstileField({
   onTokenChange: (token: string) => void;
   resetKey: number;
 }) {
-  const siteKey = import.meta.env["VITE_TURNSTILE_SITE_KEY"] as string | undefined;
+  const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<TurnstileWidgetId | null>(null);
   const [loadError, setLoadError] = useState("");
