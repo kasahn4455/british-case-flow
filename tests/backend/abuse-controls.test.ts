@@ -13,7 +13,18 @@ import {
   verifyTurnstileToken,
 } from "../../src/server/intake-abuse/turnstile.ts";
 
-test("trusted client IP comes only from CF-Connecting-IP", () => {
+test("Vercel requests use the platform-owned forwarded client IP", () => {
+  const request = new Request("https://example.test", {
+    headers: {
+      "x-vercel-id": "lhr1::iad1::abc123",
+      "x-vercel-forwarded-for": "203.0.113.10",
+      "cf-connecting-ip": "198.51.100.77",
+    },
+  });
+  assert.equal(getTrustedClientIp(request), "203.0.113.10");
+});
+
+test("Cloudflare requests use CF-Connecting-IP when Vercel is absent", () => {
   const request = new Request("https://example.test", {
     headers: {
       "cf-connecting-ip": "203.0.113.10",
@@ -23,9 +34,19 @@ test("trusted client IP comes only from CF-Connecting-IP", () => {
   assert.equal(getTrustedClientIp(request), "203.0.113.10");
 });
 
-test("spoofable forwarded headers are not used when Cloudflare header is absent", () => {
+test("generic forwarded headers are rejected without a trusted platform marker", () => {
   const request = new Request("https://example.test", {
     headers: { "x-forwarded-for": "203.0.113.10" },
+  });
+  assert.throws(() => getTrustedClientIp(request), TrustedClientIpUnavailableError);
+});
+
+test("Vercel requests fail closed when the platform client IP header is missing", () => {
+  const request = new Request("https://example.test", {
+    headers: {
+      "x-vercel-id": "lhr1::iad1::abc123",
+      "cf-connecting-ip": "203.0.113.10",
+    },
   });
   assert.throws(() => getTrustedClientIp(request), TrustedClientIpUnavailableError);
 });
