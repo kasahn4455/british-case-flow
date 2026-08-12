@@ -88,14 +88,13 @@ jobs:
           tests/backend
 
       - name: Package source tree
-        run: |
-          tar --exclude=.git --exclude=node_modules --exclude=.output --exclude=.vercel/output -czf british-case-flow-source.tgz .
+        run: git archive --format=tar.gz --output="$RUNNER_TEMP/british-case-flow-source.tgz" HEAD
 
       - name: Upload source tree
         uses: actions/upload-artifact@v4
         with:
           name: british-case-flow-source
-          path: british-case-flow-source.tgz
+          path: ${{ runner.temp }}/british-case-flow-source.tgz
           if-no-files-found: error
           retention-days: 1
 
