@@ -105,27 +105,27 @@ test("Turnstile success requires expected action and hostname when configured", 
   assert(requestBody.includes("idempotency_key="));
 });
 
-test("official always-pass Turnstile test secret accepts Cloudflare test action", async () => {
-  const fetchImpl: typeof fetch = async () =>
-    Response.json({
-      success: true,
-      action: "test",
-      hostname: "localhost",
-      "error-codes": [],
-    });
+test("explicit smoke-test action bypasses Siteverify", async () => {
+  let calls = 0;
+  const fetchImpl: typeof fetch = async () => {
+    calls += 1;
+    throw new Error("Siteverify should not run in explicit smoke-test mode");
+  };
 
   await verifyTurnstileToken({
-    token: "XXXX.DUMMY.TOKEN.XXXX",
+    token: "dummy-browser-token",
     remoteIp: "203.0.113.10",
     config: {
-      secretKey: "1x0000000000000000000000000000000AA",
-      expectedAction: "intake-submit",
+      secretKey: "placeholder-secret",
+      expectedAction: "test",
     },
     fetchImpl,
   });
+
+  assert.equal(calls, 0);
 });
 
-test("non-test Turnstile secret still rejects mismatched test action", async () => {
+test("non-smoke-test configuration still rejects mismatched action", async () => {
   const fetchImpl: typeof fetch = async () =>
     Response.json({
       success: true,
