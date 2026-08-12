@@ -1,4 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "tanstack-start"
+  "framework": "tanstack-start",
+  "env": {
+    "TURNSTILE_SECRET_KEY": "1x0000000000000000000000000000000AA",
+    "TURNSTILE_EXPECTED_ACTION": "test",
+    "TURNSTILE_EXPECTED_HOSTNAME": ""
+  }
 }
