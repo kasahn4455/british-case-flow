@@ -5,15 +5,32 @@ const TRUSTED_IP_RE = /^[0-9a-fA-F:.]{3,64}$/;
 
 export class TrustedClientIpUnavailableError extends Error {
   constructor() {
-    super("Trusted Cloudflare client IP header is unavailable");
+    super("Trusted platform client IP header is unavailable");
     this.name = "TrustedClientIpUnavailableError";
   }
 }
 
+function parseTrustedIpHeader(value: string | null): string | null {
+  const candidate = value?.split(",", 1)[0]?.trim() ?? "";
+  return candidate && TRUSTED_IP_RE.test(candidate) ? candidate : null;
+}
+
 export function getTrustedClientIp(request: Request): string {
-  const value = request.headers.get("cf-connecting-ip")?.trim();
-  if (!value || !TRUSTED_IP_RE.test(value)) throw new TrustedClientIpUnavailableError();
-  return value;
+  // Vercel injects x-vercel-id and x-vercel-forwarded-for at its edge. Prefer
+  // those platform-owned headers when the request is running behind Vercel so
+  // a caller-supplied Cloudflare-looking header cannot override the real IP.
+  if (request.headers.get("x-vercel-id")) {
+    const vercelIp = parseTrustedIpHeader(request.headers.get("x-vercel-forwarded-for"));
+    if (vercelIp) return vercelIp;
+    throw new TrustedClientIpUnavailableError();
+  }
+
+  // Keep the Cloudflare path for deployments that terminate directly at
+  // Cloudflare rather than Vercel.
+  const cloudflareIp = parseTrustedIpHeader(request.headers.get("cf-connecting-ip"));
+  if (cloudflareIp) return cloudflareIp;
+
+  throw new TrustedClientIpUnavailableError();
 }
 
 export function readIntakeSessionId(cookieHeader: string | null): string | null {
