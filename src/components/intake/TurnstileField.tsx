@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from "react";
 type TurnstileWidgetId = string | number;
 
 type TurnstileApi = {
-  ready: (callback: () => void) => void;
   render: (
     container: HTMLElement,
     options: {
@@ -48,6 +47,10 @@ function loadTurnstileScript(): Promise<void> {
   scriptPromise = new Promise<void>((resolve, reject) => {
     const existing = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
     if (existing) {
+      if (window.turnstile) {
+        resolve();
+        return;
+      }
       existing.addEventListener("load", () => resolve(), { once: true });
       existing.addEventListener(
         "error",
@@ -60,7 +63,6 @@ function loadTurnstileScript(): Promise<void> {
     const script = document.createElement("script");
     script.id = SCRIPT_ID;
     script.src = SCRIPT_SRC;
-    script.defer = true;
     script.async = true;
     script.onload = () => resolve();
     script.onerror = () => reject(new Error("Turnstile script failed to load"));
@@ -107,26 +109,23 @@ export function TurnstileField({
     loadTurnstileScript()
       .then(() => {
         if (disposed || !containerRef.current || !window.turnstile) return;
-        window.turnstile.ready(() => {
-          if (disposed || !containerRef.current || !window.turnstile) return;
-          widgetIdRef.current = window.turnstile.render(containerRef.current, {
-            sitekey: siteKey,
-            action: "intake-submit",
-            theme: "auto",
-            size: "flexible",
-            retry: "auto",
-            "retry-interval": 5000,
-            callback: (token) => {
-              setLoadError("");
-              onTokenChange(token);
-            },
-            "expired-callback": () => onTokenChange(""),
-            "error-callback": (errorCode) => {
-              onTokenChange("");
-              setLoadError(turnstileErrorMessage(errorCode));
-              return true;
-            },
-          });
+        widgetIdRef.current = window.turnstile.render(containerRef.current, {
+          sitekey: siteKey,
+          action: "intake-submit",
+          theme: "auto",
+          size: "flexible",
+          retry: "auto",
+          "retry-interval": 5000,
+          callback: (token) => {
+            setLoadError("");
+            onTokenChange(token);
+          },
+          "expired-callback": () => onTokenChange(""),
+          "error-callback": (errorCode) => {
+            onTokenChange("");
+            setLoadError(turnstileErrorMessage(errorCode));
+            return true;
+          },
         });
       })
       .catch(() => {
