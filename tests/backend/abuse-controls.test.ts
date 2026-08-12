@@ -105,6 +105,48 @@ test("Turnstile success requires expected action and hostname when configured", 
   assert(requestBody.includes("idempotency_key="));
 });
 
+test("official always-pass Turnstile test secret accepts Cloudflare test action", async () => {
+  const fetchImpl: typeof fetch = async () =>
+    Response.json({
+      success: true,
+      action: "test",
+      hostname: "localhost",
+      "error-codes": [],
+    });
+
+  await verifyTurnstileToken({
+    token: "XXXX.DUMMY.TOKEN.XXXX",
+    remoteIp: "203.0.113.10",
+    config: {
+      secretKey: "1x0000000000000000000000000000000AA",
+      expectedAction: "intake-submit",
+    },
+    fetchImpl,
+  });
+});
+
+test("non-test Turnstile secret still rejects mismatched test action", async () => {
+  const fetchImpl: typeof fetch = async () =>
+    Response.json({
+      success: true,
+      action: "test",
+      hostname: "localhost",
+    });
+
+  await assert.rejects(
+    verifyTurnstileToken({
+      token: "valid-looking-token",
+      remoteIp: "203.0.113.10",
+      config: {
+        secretKey: "production-looking-secret",
+        expectedAction: "intake-submit",
+      },
+      fetchImpl,
+    }),
+    TurnstileRejectedError,
+  );
+});
+
 test("Turnstile rejects unsuccessful or mismatched verification", async () => {
   const rejectedFetch: typeof fetch = async () =>
     Response.json({ success: false, "error-codes": ["invalid-input-response"] });
