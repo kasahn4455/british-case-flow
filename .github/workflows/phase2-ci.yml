@@ -59,6 +59,7 @@ jobs:
           test -f .vercel/output/config.json
           test -d .vercel/output/functions
           test -d .vercel/output/static
+          test -f .vercel/output/functions/__server.func/.vc-config.json
 
       - name: TypeScript
         run: npx tsc --noEmit
