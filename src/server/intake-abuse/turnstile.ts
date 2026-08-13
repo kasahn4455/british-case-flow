@@ -3,7 +3,6 @@ import { z } from "zod";
 const TURNSTILE_SITEVERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 const TOKEN_MAX_LENGTH = 2048;
 const VERIFY_TIMEOUT_MS = 5_000;
-const SMOKE_TEST_ACTION = "test";
 
 const responseSchema = z.object({
   success: z.boolean(),
@@ -49,10 +48,6 @@ function runtimeEnv(): Record<string, string | undefined> {
   );
 }
 
-function isExplicitSmokeTestMode(config: TurnstileConfig): boolean {
-  return config.expectedAction === SMOKE_TEST_ACTION && !config.expectedHostname;
-}
-
 function actionMatches(config: TurnstileConfig, actualAction: string | undefined): boolean {
   if (!config.expectedAction) return true;
   return actualAction === config.expectedAction;
@@ -82,14 +77,6 @@ export async function verifyTurnstileToken(args: {
   if (!token || token.length > TOKEN_MAX_LENGTH) throw new TurnstileRejectedError();
 
   const config = args.config ?? getTurnstileConfig();
-
-  // Explicit smoke-test mode only. The deployment uses Cloudflare's documented
-  // always-pass testing credentials with action="test" and no hostname check.
-  // Avoid the external Siteverify hop so the intake persistence pipeline can be
-  // tested independently. Production must use a real expected action/hostname,
-  // which always continues through full server-side Siteverify below.
-  if (isExplicitSmokeTestMode(config)) return;
-
   const fetchImpl = args.fetchImpl ?? fetch;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), VERIFY_TIMEOUT_MS);
