@@ -13,6 +13,8 @@ import {
   verifyTurnstileToken,
 } from "../../src/server/intake-abuse/turnstile.ts";
 
+const dummyKey = "k".repeat(24);
+
 test("Vercel requests use the platform-owned forwarded client IP", () => {
   const request = new Request("https://example.test", {
     headers: {
@@ -78,7 +80,7 @@ test("HMAC pseudonyms are deterministic but domain-separated", async () => {
   assert.notEqual(first, session);
 });
 
-test("Turnstile success requires expected action and hostname when configured", async () => {
+test("Turnstile validates action and hostname through Siteverify", async () => {
   let requestBody = "";
   const fetchImpl: typeof fetch = async (_input, init) => {
     requestBody = String(init?.body ?? "");
@@ -93,7 +95,7 @@ test("Turnstile success requires expected action and hostname when configured", 
     token: "valid-token",
     remoteIp: "203.0.113.10",
     config: {
-      secretKey: "test-secret",
+      secretKey: dummyKey,
       expectedAction: "intake-submit",
       expectedHostname: "intake.example.test",
     },
@@ -105,73 +107,48 @@ test("Turnstile success requires expected action and hostname when configured", 
   assert(requestBody.includes("idempotency_key="));
 });
 
-test("explicit smoke-test action bypasses Siteverify", async () => {
+test("test action still performs server-side Siteverify", async () => {
   let calls = 0;
   const fetchImpl: typeof fetch = async () => {
     calls += 1;
-    throw new Error("Siteverify should not run in explicit smoke-test mode");
+    return Response.json({ success: true, action: "test", hostname: "localhost" });
   };
 
   await verifyTurnstileToken({
     token: "dummy-browser-token",
     remoteIp: "203.0.113.10",
-    config: {
-      secretKey: "placeholder-secret",
-      expectedAction: "test",
-    },
+    config: { secretKey: dummyKey, expectedAction: "test" },
     fetchImpl,
   });
 
-  assert.equal(calls, 0);
+  assert.equal(calls, 1);
 });
 
-test("non-smoke-test configuration still rejects mismatched action", async () => {
+test("Turnstile rejects mismatched action", async () => {
   const fetchImpl: typeof fetch = async () =>
-    Response.json({
-      success: true,
-      action: "test",
-      hostname: "localhost",
-    });
+    Response.json({ success: true, action: "test", hostname: "localhost" });
 
   await assert.rejects(
     verifyTurnstileToken({
       token: "valid-looking-token",
       remoteIp: "203.0.113.10",
-      config: {
-        secretKey: "production-looking-secret",
-        expectedAction: "intake-submit",
-      },
+      config: { secretKey: dummyKey, expectedAction: "intake-submit" },
       fetchImpl,
     }),
     TurnstileRejectedError,
   );
 });
 
-test("Turnstile rejects unsuccessful or mismatched verification", async () => {
-  const rejectedFetch: typeof fetch = async () =>
+test("Turnstile rejects unsuccessful verification", async () => {
+  const fetchImpl: typeof fetch = async () =>
     Response.json({ success: false, "error-codes": ["invalid-input-response"] });
+
   await assert.rejects(
     verifyTurnstileToken({
       token: "bad-token",
       remoteIp: "203.0.113.10",
-      config: { secretKey: "test-secret" },
-      fetchImpl: rejectedFetch,
-    }),
-    TurnstileRejectedError,
-  );
-
-  const mismatchFetch: typeof fetch = async () =>
-    Response.json({
-      success: true,
-      action: "wrong-action",
-      hostname: "intake.example.test",
-    });
-  await assert.rejects(
-    verifyTurnstileToken({
-      token: "valid-looking-token",
-      remoteIp: "203.0.113.10",
-      config: { secretKey: "test-secret", expectedAction: "intake-submit" },
-      fetchImpl: mismatchFetch,
+      config: { secretKey: dummyKey },
+      fetchImpl,
     }),
     TurnstileRejectedError,
   );
@@ -183,11 +160,12 @@ test("Turnstile rejects missing and oversized tokens without calling Siteverify"
     calls += 1;
     return Response.json({ success: true });
   };
+
   await assert.rejects(
     verifyTurnstileToken({
       token: null,
       remoteIp: "203.0.113.10",
-      config: { secretKey: "test-secret" },
+      config: { secretKey: dummyKey },
       fetchImpl,
     }),
     TurnstileRejectedError,
@@ -196,7 +174,7 @@ test("Turnstile rejects missing and oversized tokens without calling Siteverify"
     verifyTurnstileToken({
       token: "x".repeat(2049),
       remoteIp: "203.0.113.10",
-      config: { secretKey: "test-secret" },
+      config: { secretKey: dummyKey },
       fetchImpl,
     }),
     TurnstileRejectedError,
