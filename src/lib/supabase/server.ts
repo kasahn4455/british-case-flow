@@ -1,19 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { getCookies, setCookie, setResponseHeader } from "@tanstack/react-start/server";
 
-export class StaffAuthServerConfigurationError extends Error {
-  constructor() {
-    super("Staff authentication is not configured");
-    this.name = "StaffAuthServerConfigurationError";
-  }
-}
+import { SUPABASE_PUBLIC_URL, SUPABASE_PUBLISHABLE_KEY } from "./public-config";
 
 export function createSupabaseServerClient() {
-  const url = process.env["VITE_SUPABASE_URL"];
-  const publishableKey = process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
-  if (!url || !publishableKey) throw new StaffAuthServerConfigurationError();
-
-  return createServerClient(url, publishableKey, {
+  return createServerClient(SUPABASE_PUBLIC_URL, SUPABASE_PUBLISHABLE_KEY, {
     cookies: {
       getAll() {
         return Object.entries(getCookies()).map(([name, value]) => ({ name, value }));
