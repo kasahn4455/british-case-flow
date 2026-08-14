@@ -49,8 +49,8 @@ export class OutboxDeliveryConfigurationError extends Error {
 }
 
 export class OutboxDeliveryError extends Error {
-  readonly providerCode?: string;
-  readonly providerStatus?: number;
+  readonly providerCode: string | undefined;
+  readonly providerStatus: number | undefined;
 
   constructor(details: { providerCode?: string; providerStatus?: number } = {}) {
     super("Outbox event delivery failed");
