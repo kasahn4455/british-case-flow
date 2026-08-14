@@ -1,6 +1,6 @@
-/// <reference types="vite/types/importMeta.d.ts" />
-
 import { createBrowserClient } from "@supabase/ssr";
+
+import { SUPABASE_PUBLIC_URL, SUPABASE_PUBLISHABLE_KEY } from "./public-config";
 
 export class StaffAuthConfigurationError extends Error {
   constructor() {
@@ -10,8 +10,5 @@ export class StaffAuthConfigurationError extends Error {
 }
 
 export function createSupabaseBrowserClient() {
-  const url = import.meta.env["VITE_SUPABASE_URL"] as string | undefined;
-  const publishableKey = import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] as string | undefined;
-  if (!url || !publishableKey) throw new StaffAuthConfigurationError();
-  return createBrowserClient(url, publishableKey);
+  return createBrowserClient(SUPABASE_PUBLIC_URL, SUPABASE_PUBLISHABLE_KEY);
 }
