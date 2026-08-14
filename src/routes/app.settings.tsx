@@ -1,6 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+
 import { DetailField } from "@/components/staff/DetailField";
 import { AUTOMATED_RULES_STATEMENT, FIRM } from "@/lib/mock/firm";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export const Route = createFileRoute("/app/settings")({
   head: () => ({
@@ -8,12 +11,12 @@ export const Route = createFileRoute("/app/settings")({
       { title: `Firm settings — ${FIRM.shortName} intake workspace` },
       {
         name: "description",
-        content: "Placeholder firm settings screen for the enquiry intake prototype.",
+        content: "Firm settings and account security for the enquiry intake workspace.",
       },
       { property: "og:title", content: `Firm settings — ${FIRM.shortName}` },
       {
         property: "og:description",
-        content: "Placeholder firm settings screen for the enquiry intake prototype.",
+        content: "Firm settings and account security for the enquiry intake workspace.",
       },
       { name: "robots", content: "noindex, nofollow" },
     ],
@@ -22,6 +25,12 @@ export const Route = createFileRoute("/app/settings")({
 });
 
 function SettingsPage() {
+  const navigate = useNavigate();
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
   return (
     <div className="space-y-6">
       <div>
@@ -29,7 +38,7 @@ function SettingsPage() {
           Firm settings
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Placeholder screen. Nothing on this page is editable or saved in this phase.
+          Firm configuration is read-only in this phase. Account security is live.
         </p>
       </div>
 
@@ -44,10 +53,7 @@ function SettingsPage() {
             <DetailField label="Telephone">{FIRM.phone}</DetailField>
             <DetailField label="Enquiries inbox">{FIRM.email}</DetailField>
             <DetailField label="Privacy notice">
-              <a
-                href={FIRM.privacyPolicyUrl}
-                className="underline underline-offset-4"
-              >
+              <a href={FIRM.privacyPolicyUrl} className="underline underline-offset-4">
                 Privacy Notice (placeholder link)
               </a>
             </DetailField>
@@ -63,6 +69,112 @@ function SettingsPage() {
             <DetailField label="Public link">/intake/demo-form</DetailField>
             <DetailField label="Automated rules notice">{AUTOMATED_RULES_STATEMENT}</DetailField>
           </dl>
+        </section>
+
+        <section className="rounded-md border border-border bg-card px-5 py-5 lg:col-span-2">
+          <div className="max-w-xl">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              Account security
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Change your staff password while this MFA-verified session is active. You will be
+              signed out everywhere after the change and must sign in again with the new password
+              and your authenticator code.
+            </p>
+
+            {passwordError ? (
+              <p
+                role="alert"
+                className="mt-4 rounded-md border border-destructive/40 px-3 py-3 text-sm text-destructive"
+              >
+                {passwordError}
+              </p>
+            ) : null}
+
+            <form
+              className="mt-5 space-y-4"
+              onSubmit={async (event) => {
+                event.preventDefault();
+                setPasswordError("");
+
+                if (password.length < 14) {
+                  setPasswordError("Use a password or passphrase with at least 14 characters.");
+                  return;
+                }
+                if (password !== confirmPassword) {
+                  setPasswordError("The two password entries do not match.");
+                  return;
+                }
+
+                setSubmitting(true);
+                try {
+                  const supabase = createSupabaseBrowserClient();
+                  const { data: aal, error: aalError } =
+                    await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+                  if (aalError || aal.currentLevel !== "aal2" || aal.nextLevel !== "aal2") {
+                    setPasswordError(
+                      "Your MFA-verified session is no longer current. Sign in again and retry.",
+                    );
+                    return;
+                  }
+
+                  const { error: updateError } = await supabase.auth.updateUser({ password });
+                  if (updateError) {
+                    setPasswordError("Password change failed. Please try again.");
+                    return;
+                  }
+
+                  await supabase.auth.signOut({ scope: "global" });
+                  await navigate({ to: "/login", replace: true });
+                } catch (caught) {
+                  console.error(caught);
+                  setPasswordError("Password change is temporarily unavailable. Please try again.");
+                } finally {
+                  setSubmitting(false);
+                }
+              }}
+            >
+              <div>
+                <label htmlFor="new-password" className="text-sm font-semibold text-foreground">
+                  New password
+                </label>
+                <input
+                  id="new-password"
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  autoComplete="new-password"
+                  minLength={14}
+                  required
+                  disabled={submitting}
+                  className="mt-2 block h-11 w-full rounded-md border border-input bg-card px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-60"
+                />
+              </div>
+              <div>
+                <label htmlFor="confirm-password" className="text-sm font-semibold text-foreground">
+                  Confirm new password
+                </label>
+                <input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  autoComplete="new-password"
+                  minLength={14}
+                  required
+                  disabled={submitting}
+                  className="mt-2 block h-11 w-full rounded-md border border-input bg-card px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-60"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={submitting || !password || !confirmPassword}
+                className="h-11 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {submitting ? "Changing password…" : "Change password"}
+              </button>
+            </form>
+          </div>
         </section>
 
         <section className="rounded-md border border-dashed border-border bg-surface px-5 py-4 lg:col-span-2">
