@@ -111,11 +111,7 @@ function SettingsPage() {
                   const supabase = createSupabaseBrowserClient();
                   const { data: aal, error: aalError } =
                     await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-                  if (
-                    aalError ||
-                    aal.currentLevel !== "aal2" ||
-                    aal.nextLevel !== "aal2"
-                  ) {
+                  if (aalError || aal.currentLevel !== "aal2" || aal.nextLevel !== "aal2") {
                     setPasswordError(
                       "Your MFA-verified session is no longer current. Sign in again and retry.",
                     );
@@ -155,10 +151,7 @@ function SettingsPage() {
                 />
               </div>
               <div>
-                <label
-                  htmlFor="confirm-password"
-                  className="text-sm font-semibold text-foreground"
-                >
+                <label htmlFor="confirm-password" className="text-sm font-semibold text-foreground">
                   Confirm new password
                 </label>
                 <input
