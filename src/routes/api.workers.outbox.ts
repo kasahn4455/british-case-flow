@@ -1,17 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import {
-  claimOutboxEvents,
-  completeOutboxEvent,
-  failOutboxEvent,
   OutboxDatabaseConfigurationError,
   OutboxDatabaseError,
 } from "@/server/outbox-worker/database";
-import {
-  assertOutboxDeliveryConfigured,
-  deliverOutboxEvent,
-  OutboxDeliveryConfigurationError,
-} from "@/server/outbox-worker/delivery";
+import { OutboxDeliveryConfigurationError } from "@/server/outbox-worker/delivery";
+import { processOutboxBatch } from "@/server/outbox-worker/process";
 import {
   isAuthorizedWorkerRequest,
   WorkerAuthConfigurationError,
@@ -36,34 +30,7 @@ export const Route = createFileRoute("/api/workers/outbox")({
             return json({ error: "UNAUTHORIZED" }, 401);
           }
 
-          // Fail before claiming rows if the downstream processor is unavailable by configuration.
-          assertOutboxDeliveryConfigured();
-
-          const workerId = crypto.randomUUID();
-          const events = await claimOutboxEvents(workerId, 25);
-          let delivered = 0;
-          let failed = 0;
-
-          for (const event of events) {
-            try {
-              await deliverOutboxEvent(event);
-              await completeOutboxEvent(event.event_id, workerId);
-              delivered += 1;
-            } catch {
-              try {
-                await failOutboxEvent(event.event_id, workerId);
-              } catch (databaseError) {
-                console.error(
-                  databaseError instanceof Error
-                    ? databaseError.message
-                    : "Outbox fail update error",
-                );
-              }
-              failed += 1;
-            }
-          }
-
-          return json({ claimed: events.length, delivered, failed }, 200);
+          return json(await processOutboxBatch(25), 200);
         } catch (error) {
           if (
             error instanceof WorkerAuthConfigurationError ||

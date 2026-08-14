@@ -2,10 +2,13 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { DetailField } from "@/components/staff/DetailField";
+import { getStaffAuthState } from "@/lib/auth/staff-auth.functions";
+import { processFirmOutboxNow } from "@/lib/enquiries/outbox-admin.functions";
 import { AUTOMATED_RULES_STATEMENT, FIRM } from "@/lib/mock/firm";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export const Route = createFileRoute("/app/settings")({
+  loader: () => getStaffAuthState(),
   head: () => ({
     meta: [
       { title: `Firm settings — ${FIRM.shortName} intake workspace` },
@@ -25,11 +28,16 @@ export const Route = createFileRoute("/app/settings")({
 });
 
 function SettingsPage() {
+  const authState = Route.useLoaderData();
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [deliveryMessage, setDeliveryMessage] = useState("");
+  const [deliveryError, setDeliveryError] = useState("");
+  const [delivering, setDelivering] = useState(false);
+  const isAdmin = authState.kind === "staff" && authState.role === "admin";
 
   return (
     <div className="space-y-6">
@@ -70,6 +78,61 @@ function SettingsPage() {
             <DetailField label="Automated rules notice">{AUTOMATED_RULES_STATEMENT}</DetailField>
           </dl>
         </section>
+
+        {isAdmin ? (
+          <section className="rounded-md border border-border bg-card px-5 py-5 lg:col-span-2">
+            <div className="max-w-xl">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                Notification delivery
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Process this firm&apos;s pending notification queue now. In email test mode, every
+                message is rerouted to the configured safe test inbox rather than the prospect or
+                firm recipient.
+              </p>
+
+              {deliveryMessage ? (
+                <p className="mt-4 rounded-md border border-border px-3 py-3 text-sm">
+                  {deliveryMessage}
+                </p>
+              ) : null}
+              {deliveryError ? (
+                <p
+                  role="alert"
+                  className="mt-4 rounded-md border border-destructive/40 px-3 py-3 text-sm text-destructive"
+                >
+                  {deliveryError}
+                </p>
+              ) : null}
+
+              <button
+                type="button"
+                disabled={delivering}
+                className="mt-4 h-11 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={async () => {
+                  setDeliveryMessage("");
+                  setDeliveryError("");
+                  setDelivering(true);
+                  try {
+                    const result = await processFirmOutboxNow();
+                    setDeliveryMessage(
+                      `Claimed ${result.claimed}; delivered ${result.delivered}; failed ${result.failed}.`,
+                    );
+                  } catch (caught) {
+                    console.error(caught);
+                    setDeliveryError(
+                      "Notification delivery is not configured or is temporarily unavailable.",
+                    );
+                  } finally {
+                    setDelivering(false);
+                  }
+                }}
+              >
+                {delivering ? "Processing notifications…" : "Process pending notifications"}
+              </button>
+            </div>
+          </section>
+        ) : null}
 
         <section className="rounded-md border border-border bg-card px-5 py-5 lg:col-span-2">
           <div className="max-w-xl">
