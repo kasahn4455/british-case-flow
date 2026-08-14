@@ -49,9 +49,14 @@ export class OutboxDeliveryConfigurationError extends Error {
 }
 
 export class OutboxDeliveryError extends Error {
-  constructor() {
+  readonly providerCode?: string;
+  readonly providerStatus?: number;
+
+  constructor(details: { providerCode?: string; providerStatus?: number } = {}) {
     super("Outbox event delivery failed");
     this.name = "OutboxDeliveryError";
+    this.providerCode = details.providerCode;
+    this.providerStatus = details.providerStatus;
   }
 }
 
@@ -175,6 +180,6 @@ export async function deliverOutboxEvent(event: ClaimedOutboxEvent): Promise<voi
     console.error(
       `Resend delivery failed: status=${response.status} code=${providerCode} event=${event.event_id}`,
     );
-    throw new OutboxDeliveryError();
+    throw new OutboxDeliveryError({ providerCode, providerStatus: response.status });
   }
 }
