@@ -5,13 +5,29 @@ import {
   failOutboxEvent,
   type ClaimedOutboxEvent,
 } from "./database";
-import { assertOutboxDeliveryConfigured, deliverOutboxEvent } from "./delivery";
+import {
+  assertOutboxDeliveryConfigured,
+  deliverOutboxEvent,
+  OutboxDeliveryError,
+} from "./delivery";
 
 export type OutboxBatchResult = {
   claimed: number;
   delivered: number;
   failed: number;
+  failureCodes: string[];
 };
+
+function getFailureCode(error: unknown): string | null {
+  if (!(error instanceof OutboxDeliveryError)) return null;
+
+  const providerCode = error.providerCode?.trim();
+  if (providerCode && providerCode !== "unknown" && providerCode !== "unparseable") {
+    return providerCode;
+  }
+  if (error.providerStatus) return `http_${error.providerStatus}`;
+  return "delivery_error";
+}
 
 async function processClaimedEvents(
   events: ClaimedOutboxEvent[],
@@ -19,13 +35,17 @@ async function processClaimedEvents(
 ): Promise<OutboxBatchResult> {
   let delivered = 0;
   let failed = 0;
+  const failureCodes = new Set<string>();
 
   for (const event of events) {
     try {
       await deliverOutboxEvent(event);
       await completeOutboxEvent(event.event_id, workerId);
       delivered += 1;
-    } catch {
+    } catch (deliveryError) {
+      const failureCode = getFailureCode(deliveryError);
+      if (failureCode) failureCodes.add(failureCode);
+
       try {
         await failOutboxEvent(event.event_id, workerId);
       } catch (databaseError) {
@@ -37,7 +57,12 @@ async function processClaimedEvents(
     }
   }
 
-  return { claimed: events.length, delivered, failed };
+  return {
+    claimed: events.length,
+    delivered,
+    failed,
+    failureCodes: [...failureCodes].slice(0, 5),
+  };
 }
 
 export async function processOutboxBatch(limit = 25): Promise<OutboxBatchResult> {
