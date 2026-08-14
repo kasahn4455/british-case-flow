@@ -22,6 +22,7 @@ on:
       - "src/routes/api.workers.*.ts"
       - "src/routes/app.enquiries.index.tsx"
       - "src/routes/app.enquiries.$id.tsx"
+      - "src/routes/app.settings.tsx"
       - "src/start.ts"
       - "tests/backend/**"
       - "supabase/**"
@@ -88,6 +89,7 @@ jobs:
           src/routes/api.workers.maintenance.ts
           src/routes/app.enquiries.index.tsx
           'src/routes/app.enquiries.$id.tsx'
+          src/routes/app.settings.tsx
           src/start.ts
           tests/backend
 
