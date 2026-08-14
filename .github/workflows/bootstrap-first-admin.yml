@@ -1,0 +1,30 @@
+name: Bootstrap first admin
+
+on:
+  push:
+    branches:
+      - agent/bootstrap-first-admin-proxy
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request GitHub OIDC token and bootstrap first admin
+        shell: bash
+        env:
+          FUNCTION_URL: https://dbjhfrmnjvqmfhthiegg.supabase.co/functions/v1/bootstrap-first-admin
+        run: |
+          set -euo pipefail
+          token_json="$(curl -fsSL \
+            -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=british-case-flow-bootstrap")"
+          id_token="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])' <<<"${token_json}")"
+          response="$(curl -fsSL -X POST \
+            -H "Authorization: Bearer ${id_token}" \
+            -H "Accept: application/json" \
+            "${FUNCTION_URL}")"
+          echo "${response}"
