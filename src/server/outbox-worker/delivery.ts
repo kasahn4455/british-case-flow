@@ -25,10 +25,12 @@ const acknowledgementSchema = z.object({
   preferred_contact_method: z.string().optional(),
 });
 
-const resendErrorSchema = z.object({
-  name: z.string().optional(),
-  statusCode: z.number().optional(),
-}).passthrough();
+const resendErrorSchema = z
+  .object({
+    name: z.string().optional(),
+    statusCode: z.number().optional(),
+  })
+  .passthrough();
 
 type DeliveryEnvironment = z.infer<typeof envSchema>;
 
