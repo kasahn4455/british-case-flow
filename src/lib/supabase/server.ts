@@ -3,6 +3,13 @@ import { getCookies, setCookie, setResponseHeader } from "@tanstack/react-start/
 
 import { SUPABASE_PUBLIC_URL, SUPABASE_PUBLISHABLE_KEY } from "./public-config";
 
+export class StaffAuthServerConfigurationError extends Error {
+  constructor() {
+    super("Staff authentication is not configured");
+    this.name = "StaffAuthServerConfigurationError";
+  }
+}
+
 export function createSupabaseServerClient() {
   return createServerClient(SUPABASE_PUBLIC_URL, SUPABASE_PUBLISHABLE_KEY, {
     cookies: {
