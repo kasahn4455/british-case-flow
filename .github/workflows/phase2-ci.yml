@@ -13,6 +13,7 @@ on:
       - "src/components/staff/**"
       - "src/lib/auth/**"
       - "src/lib/enquiries/**"
+      - "src/lib/supabase/**"
       - "src/lib/intake/canonical-submission.ts"
       - "src/lib/mock/firm.ts"
       - "src/routes/index.tsx"
@@ -75,6 +76,7 @@ jobs:
           src/server/outbox-worker
           src/lib/auth
           src/lib/enquiries
+          src/lib/supabase
           src/components/intake/TurnstileField.tsx
           src/components/staff
           src/lib/intake/canonical-submission.ts
