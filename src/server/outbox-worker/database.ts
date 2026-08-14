@@ -81,6 +81,22 @@ export async function claimOutboxEvents(
   return parsed.data;
 }
 
+export async function claimOutboxEventsForFirm(
+  workerId: string,
+  firmId: string,
+  limit = 25,
+): Promise<ClaimedOutboxEvent[]> {
+  const raw = await rpc("claim_outbox_events_for_firm", {
+    p_worker_id: workerId,
+    p_firm_id: firmId,
+    p_limit: limit,
+    p_lease_seconds: 120,
+  });
+  const parsed = claimedEventsSchema.safeParse(raw);
+  if (!parsed.success) throw new OutboxDatabaseError();
+  return parsed.data;
+}
+
 export async function completeOutboxEvent(eventId: string, workerId: string): Promise<void> {
   await rpc("complete_outbox_event", {
     p_event_id: eventId,
