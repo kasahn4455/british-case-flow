@@ -115,8 +115,11 @@ function SettingsPage() {
                   setDelivering(true);
                   try {
                     const result = await processFirmOutboxNow();
+                    const providerDetails = result.failureCodes.length
+                      ? ` Provider code${result.failureCodes.length === 1 ? "" : "s"}: ${result.failureCodes.join(", ")}.`
+                      : "";
                     setDeliveryMessage(
-                      `Claimed ${result.claimed}; delivered ${result.delivered}; failed ${result.failed}.`,
+                      `Claimed ${result.claimed}; delivered ${result.delivered}; failed ${result.failed}.${providerDetails}`,
                     );
                   } catch (caught) {
                     console.error(caught);
