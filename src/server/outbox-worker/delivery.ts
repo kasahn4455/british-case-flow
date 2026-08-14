@@ -50,10 +50,12 @@ export class OutboxDeliveryError extends Error {
 
 function getRuntimeEnv(): Record<string, string | undefined> {
   return (
-    globalThis as typeof globalThis & {
-      process?: { env?: Record<string, string | undefined> };
-    }
-  ).process?.env ?? {};
+    (
+      globalThis as typeof globalThis & {
+        process?: { env?: Record<string, string | undefined> };
+      }
+    ).process?.env ?? {}
+  );
 }
 
 function getEnv(): DeliveryEnvironment {
@@ -61,7 +63,10 @@ function getEnv(): DeliveryEnvironment {
   if (!parsed.success) throw new OutboxDeliveryConfigurationError();
 
   const env = parsed.data;
-  if (!env.OUTBOX_EMAIL_TEST_RECIPIENT && (!env.OUTBOX_EMAIL_FROM || !env.OUTBOX_INTERNAL_ALERT_EMAIL)) {
+  if (
+    !env.OUTBOX_EMAIL_TEST_RECIPIENT &&
+    (!env.OUTBOX_EMAIL_FROM || !env.OUTBOX_INTERNAL_ALERT_EMAIL)
+  ) {
     throw new OutboxDeliveryConfigurationError();
   }
 
@@ -80,7 +85,11 @@ function isReservedTestAddress(email: string): boolean {
   );
 }
 
-function withTestPrelude(text: string, event: ClaimedOutboxEvent, originalDestination: string): string {
+function withTestPrelude(
+  text: string,
+  event: ClaimedOutboxEvent,
+  originalDestination: string,
+): string {
   return [
     "TEST DELIVERY ONLY — no prospect notification was sent to the original destination.",
     `Event type: ${event.event_type}`,
@@ -124,9 +133,7 @@ function buildResendEmail(event: ClaimedOutboxEvent, env: DeliveryEnvironment): 
     from,
     to: testRecipient ?? payload.data.recipient_email,
     subject: `${testRecipient ? "[TEST] " : ""}We received your enquiry — ${payload.data.enquiry_reference}`,
-    text: testRecipient
-      ? withTestPrelude(text, event, payload.data.recipient_email)
-      : text,
+    text: testRecipient ? withTestPrelude(text, event, payload.data.recipient_email) : text,
   };
 }
 
