@@ -25,6 +25,11 @@ const acknowledgementSchema = z.object({
   preferred_contact_method: z.string().optional(),
 });
 
+const resendErrorSchema = z.object({
+  name: z.string().optional(),
+  statusCode: z.number().optional(),
+}).passthrough();
+
 type DeliveryEnvironment = z.infer<typeof envSchema>;
 
 type ResendEmail = {
@@ -156,5 +161,18 @@ export async function deliverOutboxEvent(event: ClaimedOutboxEvent): Promise<voi
     body: JSON.stringify(email),
   });
 
-  if (!response.ok) throw new OutboxDeliveryError();
+  if (!response.ok) {
+    let providerCode = "unknown";
+    try {
+      const raw = (await response.json()) as unknown;
+      const parsed = resendErrorSchema.safeParse(raw);
+      if (parsed.success) providerCode = parsed.data.name ?? "unknown";
+    } catch {
+      providerCode = "unparseable";
+    }
+    console.error(
+      `Resend delivery failed: status=${response.status} code=${providerCode} event=${event.event_id}`,
+    );
+    throw new OutboxDeliveryError();
+  }
 }
