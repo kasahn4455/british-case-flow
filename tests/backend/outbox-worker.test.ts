@@ -93,10 +93,7 @@ test("Resend test mode reroutes internal alerts and preserves stable idempotency
     assert.equal(captured.url, "https://api.resend.com/emails");
     const headers = new Headers(captured.init?.headers);
     assert.equal(headers.get("authorization"), `Bearer ${RESEND_KEY}`);
-    assert.equal(
-      headers.get("idempotency-key"),
-      "outbox/71000000-0000-0000-0000-000000000001",
-    );
+    assert.equal(headers.get("idempotency-key"), "outbox/71000000-0000-0000-0000-000000000001");
     const body = JSON.parse(String(captured.init?.body)) as Record<string, string>;
     assert.equal(body["from"], "British Case Flow Demo <onboarding@resend.dev>");
     assert.equal(body["to"], TEST_RECIPIENT);
