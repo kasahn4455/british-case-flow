@@ -13,6 +13,13 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
+import { Route as AppStaffRouteImport } from './routes/app.staff'
+import { Route as MfaChallengeRouteImport } from './routes/mfa.challenge'
+import { Route as MfaSetupRouteImport } from './routes/mfa.setup'
+import { Route as StaffActivateRouteImport } from './routes/staff.activate'
+import { Route as ApiIntakePublishedFormIdRouteImport } from './routes/api.intake.$publishedFormId'
+import { Route as ApiWorkersMaintenanceRouteImport } from './routes/api.workers.maintenance'
+import { Route as ApiWorkersOutboxRouteImport } from './routes/api.workers.outbox'
 import { Route as AppEnquiriesIndexRouteImport } from './routes/app.enquiries.index'
 import { Route as AppEnquiriesIdRouteImport } from './routes/app.enquiries.$id'
 import { Route as IntakePublishedFormIdIndexRouteImport } from './routes/intake.$publishedFormId.index'
@@ -37,6 +44,42 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => AppRoute,
+} as any)
+const AppStaffRoute = AppStaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => AppRoute,
+} as any)
+const MfaChallengeRoute = MfaChallengeRouteImport.update({
+  id: '/mfa/challenge',
+  path: '/mfa/challenge',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MfaSetupRoute = MfaSetupRouteImport.update({
+  id: '/mfa/setup',
+  path: '/mfa/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffActivateRoute = StaffActivateRouteImport.update({
+  id: '/staff/activate',
+  path: '/staff/activate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiIntakePublishedFormIdRoute =
+  ApiIntakePublishedFormIdRouteImport.update({
+    id: '/api/intake/$publishedFormId',
+    path: '/api/intake/$publishedFormId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiWorkersMaintenanceRoute = ApiWorkersMaintenanceRouteImport.update({
+  id: '/api/workers/maintenance',
+  path: '/api/workers/maintenance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiWorkersOutboxRoute = ApiWorkersOutboxRouteImport.update({
+  id: '/api/workers/outbox',
+  path: '/api/workers/outbox',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppEnquiriesIndexRoute = AppEnquiriesIndexRouteImport.update({
   id: '/enquiries/',
@@ -66,6 +109,13 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/app/settings': typeof AppSettingsRoute
+  '/app/staff': typeof AppStaffRoute
+  '/mfa/challenge': typeof MfaChallengeRoute
+  '/mfa/setup': typeof MfaSetupRoute
+  '/staff/activate': typeof StaffActivateRoute
+  '/api/intake/$publishedFormId': typeof ApiIntakePublishedFormIdRoute
+  '/api/workers/maintenance': typeof ApiWorkersMaintenanceRoute
+  '/api/workers/outbox': typeof ApiWorkersOutboxRoute
   '/app/enquiries/$id': typeof AppEnquiriesIdRoute
   '/intake/$publishedFormId/submitted': typeof IntakePublishedFormIdSubmittedRoute
   '/app/enquiries/': typeof AppEnquiriesIndexRoute
@@ -76,6 +126,13 @@ export interface FileRoutesByTo {
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/app/settings': typeof AppSettingsRoute
+  '/app/staff': typeof AppStaffRoute
+  '/mfa/challenge': typeof MfaChallengeRoute
+  '/mfa/setup': typeof MfaSetupRoute
+  '/staff/activate': typeof StaffActivateRoute
+  '/api/intake/$publishedFormId': typeof ApiIntakePublishedFormIdRoute
+  '/api/workers/maintenance': typeof ApiWorkersMaintenanceRoute
+  '/api/workers/outbox': typeof ApiWorkersOutboxRoute
   '/app/enquiries/$id': typeof AppEnquiriesIdRoute
   '/intake/$publishedFormId/submitted': typeof IntakePublishedFormIdSubmittedRoute
   '/app/enquiries': typeof AppEnquiriesIndexRoute
@@ -87,6 +144,13 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/app/settings': typeof AppSettingsRoute
+  '/app/staff': typeof AppStaffRoute
+  '/mfa/challenge': typeof MfaChallengeRoute
+  '/mfa/setup': typeof MfaSetupRoute
+  '/staff/activate': typeof StaffActivateRoute
+  '/api/intake/$publishedFormId': typeof ApiIntakePublishedFormIdRoute
+  '/api/workers/maintenance': typeof ApiWorkersMaintenanceRoute
+  '/api/workers/outbox': typeof ApiWorkersOutboxRoute
   '/app/enquiries/$id': typeof AppEnquiriesIdRoute
   '/intake/$publishedFormId/submitted': typeof IntakePublishedFormIdSubmittedRoute
   '/app/enquiries/': typeof AppEnquiriesIndexRoute
@@ -99,6 +163,13 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/app/settings'
+    | '/app/staff'
+    | '/mfa/challenge'
+    | '/mfa/setup'
+    | '/staff/activate'
+    | '/api/intake/$publishedFormId'
+    | '/api/workers/maintenance'
+    | '/api/workers/outbox'
     | '/app/enquiries/$id'
     | '/intake/$publishedFormId/submitted'
     | '/app/enquiries/'
@@ -109,6 +180,13 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/app/settings'
+    | '/app/staff'
+    | '/mfa/challenge'
+    | '/mfa/setup'
+    | '/staff/activate'
+    | '/api/intake/$publishedFormId'
+    | '/api/workers/maintenance'
+    | '/api/workers/outbox'
     | '/app/enquiries/$id'
     | '/intake/$publishedFormId/submitted'
     | '/app/enquiries'
@@ -119,6 +197,13 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/app/settings'
+    | '/app/staff'
+    | '/mfa/challenge'
+    | '/mfa/setup'
+    | '/staff/activate'
+    | '/api/intake/$publishedFormId'
+    | '/api/workers/maintenance'
+    | '/api/workers/outbox'
     | '/app/enquiries/$id'
     | '/intake/$publishedFormId/submitted'
     | '/app/enquiries/'
@@ -129,6 +214,12 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  MfaChallengeRoute: typeof MfaChallengeRoute
+  MfaSetupRoute: typeof MfaSetupRoute
+  StaffActivateRoute: typeof StaffActivateRoute
+  ApiIntakePublishedFormIdRoute: typeof ApiIntakePublishedFormIdRoute
+  ApiWorkersMaintenanceRoute: typeof ApiWorkersMaintenanceRoute
+  ApiWorkersOutboxRoute: typeof ApiWorkersOutboxRoute
   IntakePublishedFormIdSubmittedRoute: typeof IntakePublishedFormIdSubmittedRoute
   IntakePublishedFormIdIndexRoute: typeof IntakePublishedFormIdIndexRoute
 }
@@ -163,6 +254,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/staff': {
+      id: '/app/staff'
+      path: '/staff'
+      fullPath: '/app/staff'
+      preLoaderRoute: typeof AppStaffRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/mfa/challenge': {
+      id: '/mfa/challenge'
+      path: '/mfa/challenge'
+      fullPath: '/mfa/challenge'
+      preLoaderRoute: typeof MfaChallengeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mfa/setup': {
+      id: '/mfa/setup'
+      path: '/mfa/setup'
+      fullPath: '/mfa/setup'
+      preLoaderRoute: typeof MfaSetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff/activate': {
+      id: '/staff/activate'
+      path: '/staff/activate'
+      fullPath: '/staff/activate'
+      preLoaderRoute: typeof StaffActivateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/intake/$publishedFormId': {
+      id: '/api/intake/$publishedFormId'
+      path: '/api/intake/$publishedFormId'
+      fullPath: '/api/intake/$publishedFormId'
+      preLoaderRoute: typeof ApiIntakePublishedFormIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/workers/maintenance': {
+      id: '/api/workers/maintenance'
+      path: '/api/workers/maintenance'
+      fullPath: '/api/workers/maintenance'
+      preLoaderRoute: typeof ApiWorkersMaintenanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/workers/outbox': {
+      id: '/api/workers/outbox'
+      path: '/api/workers/outbox'
+      fullPath: '/api/workers/outbox'
+      preLoaderRoute: typeof ApiWorkersOutboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/enquiries/': {
       id: '/app/enquiries/'
       path: '/enquiries'
@@ -196,12 +336,14 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
+  AppStaffRoute: typeof AppStaffRoute
   AppEnquiriesIdRoute: typeof AppEnquiriesIdRoute
   AppEnquiriesIndexRoute: typeof AppEnquiriesIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
+  AppStaffRoute: AppStaffRoute,
   AppEnquiriesIdRoute: AppEnquiriesIdRoute,
   AppEnquiriesIndexRoute: AppEnquiriesIndexRoute,
 }
@@ -212,6 +354,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  MfaChallengeRoute: MfaChallengeRoute,
+  MfaSetupRoute: MfaSetupRoute,
+  StaffActivateRoute: StaffActivateRoute,
+  ApiIntakePublishedFormIdRoute: ApiIntakePublishedFormIdRoute,
+  ApiWorkersMaintenanceRoute: ApiWorkersMaintenanceRoute,
+  ApiWorkersOutboxRoute: ApiWorkersOutboxRoute,
   IntakePublishedFormIdSubmittedRoute: IntakePublishedFormIdSubmittedRoute,
   IntakePublishedFormIdIndexRoute: IntakePublishedFormIdIndexRoute,
 }

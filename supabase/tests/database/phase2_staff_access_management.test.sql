@@ -1,7 +1,7 @@
 create extension if not exists pgtap with schema extensions;
 
 begin;
-select plan(22);
+select plan(24);
 
 select ok(
   to_regprocedure('public.list_firm_staff_for_admin()') is not null,
@@ -171,17 +171,25 @@ select throws_ok(
   'Staff membership not found',
   'administrator cannot mutate another firm membership'
 );
-select throws_ok(
+select lives_ok(
   $$select * from public.admin_update_staff_membership(
     '83000000-0000-0000-0000-000000000003',
     'senior'::public.staff_role,
     'revoked'::public.membership_status
   )$$,
-  '22023',
-  'Staff access may only be active or suspended',
-  'admin UI mutation path cannot silently revoke an account'
+  'administrator can revoke another staff membership'
 );
 reset role;
+select is(
+  (select status::text from public.staff_memberships where id = '83000000-0000-0000-0000-000000000003'),
+  'revoked',
+  'revocation immediately removes workspace access'
+);
+select is(
+  (select count(*)::integer from public.access_logs where action = 'STAFF_MEMBERSHIP_REVOKED'),
+  1,
+  'revocation creates a dedicated access audit record'
+);
 
 set local role service_role;
 select lives_ok(
