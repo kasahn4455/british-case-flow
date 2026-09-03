@@ -1,7 +1,7 @@
 create extension if not exists pgtap with schema extensions;
 
 begin;
-select plan(10);
+select plan(11);
 
 select ok(
   to_regprocedure('public.get_firm_settings_overview(uuid)') is not null,
