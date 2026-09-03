@@ -15,6 +15,7 @@ const claimedEventSchema = z.object({
 });
 
 const claimedEventsSchema = z.array(claimedEventSchema);
+const schedulerTokenSchema = z.string().min(32).max(256);
 const cleanupSchema = z.object({
   rate_limit_windows_deleted: z.number().int().nonnegative(),
   security_event_retention_deferred: z.literal(true),
@@ -51,20 +52,39 @@ function getEnv() {
 
 async function rpc(rpcName: string, body: Record<string, unknown>): Promise<unknown> {
   const env = getEnv();
-  const response = await fetch(new URL(`/rest/v1/rpc/${rpcName}`, env.SUPABASE_URL), {
-    method: "POST",
-    cache: "no-store",
-    headers: {
-      apikey: env.SUPABASE_SECRET_KEY,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
+  let response: Response;
+  try {
+    response = await fetch(new URL(`/rest/v1/rpc/${rpcName}`, env.SUPABASE_URL), {
+      method: "POST",
+      cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
+      headers: {
+        apikey: env.SUPABASE_SECRET_KEY,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    throw new OutboxDatabaseError();
+  }
 
   if (!response.ok) throw new OutboxDatabaseError();
   if (response.status === 204) return null;
+
   const text = await response.text();
-  return text ? (JSON.parse(text) as unknown) : null;
+  if (!text) return null;
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    throw new OutboxDatabaseError();
+  }
+}
+
+export async function getOutboxSchedulerToken(): Promise<string> {
+  const raw = await rpc("get_outbox_scheduler_token", {});
+  const parsed = schedulerTokenSchema.safeParse(raw);
+  if (!parsed.success) throw new OutboxDatabaseError();
+  return parsed.data;
 }
 
 export async function claimOutboxEvents(
