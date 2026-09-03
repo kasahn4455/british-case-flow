@@ -20,15 +20,15 @@ export const Route = createFileRoute("/app")({
   component: StaffLayout,
 });
 
-const NAV = [
-  { to: "/app/enquiries", label: "Enquiries" },
-  { to: "/app/settings", label: "Firm settings" },
-] as const;
-
 function StaffLayout() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const authState = Route.useLoaderData();
   const staff = authState.kind === "staff" ? authState : null;
+  const nav = [
+    { to: "/app/enquiries", label: "Enquiries" },
+    ...(staff?.role === "admin" ? [{ to: "/app/staff", label: "Staff access" }] : []),
+    { to: "/app/settings", label: "Firm settings" },
+  ] as const;
 
   return (
     <div className="min-h-screen bg-background">
@@ -48,7 +48,7 @@ function StaffLayout() {
             ) : null}
           </div>
           <nav aria-label="Primary" className="flex flex-wrap items-center gap-1">
-            {NAV.map((item) => {
+            {nav.map((item) => {
               const active = pathname.startsWith(item.to);
               return (
                 <Link
