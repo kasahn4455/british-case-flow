@@ -158,7 +158,10 @@ function StaffActivationPage() {
             }}
           >
             <div>
-              <label htmlFor="activation-password" className="text-sm font-semibold text-foreground">
+              <label
+                htmlFor="activation-password"
+                className="text-sm font-semibold text-foreground"
+              >
                 New password
               </label>
               <input
