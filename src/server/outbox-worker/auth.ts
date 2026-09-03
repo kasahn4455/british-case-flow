@@ -1,8 +1,11 @@
 import { z } from "zod";
 
+import { getOutboxSchedulerToken } from "./database";
+
 const envSchema = z.object({
   OUTBOX_WORKER_TOKEN: z.string().min(32),
 });
+const schedulerTokenSchema = z.string().min(32).max(256);
 
 export class WorkerAuthConfigurationError extends Error {
   constructor() {
@@ -40,9 +43,18 @@ async function constantTimeEqual(left: string, right: string): Promise<boolean> 
 }
 
 export async function isAuthorizedWorkerRequest(request: Request): Promise<boolean> {
-  const expectedToken = getExpectedToken();
-  const header = request.headers.get("authorization") ?? "";
-  const suppliedToken = header.startsWith("Bearer ") ? header.slice(7) : "";
-  if (!suppliedToken) return false;
-  return constantTimeEqual(suppliedToken, expectedToken);
+  const authorization = request.headers.get("authorization") ?? "";
+  if (authorization.startsWith("Bearer ")) {
+    const suppliedToken = authorization.slice(7);
+    if (!suppliedToken) return false;
+    return constantTimeEqual(suppliedToken, getExpectedToken());
+  }
+
+  const schedulerToken = schedulerTokenSchema.safeParse(
+    request.headers.get("x-outbox-scheduler-token"),
+  );
+  if (!schedulerToken.success) return false;
+
+  const expectedSchedulerToken = await getOutboxSchedulerToken();
+  return constantTimeEqual(schedulerToken.data, expectedSchedulerToken);
 }
