@@ -198,9 +198,12 @@ function StaffAccessRow({ member, isSelf, onChanged }: RowProps) {
     <tr className="border-t border-border align-top">
       <td className="px-4 py-4">
         <div className="font-medium text-foreground">
-          {member.email ?? "Email unavailable"} {isSelf ? <span className="text-muted-foreground">(you)</span> : null}
+          {member.email ?? "Email unavailable"}{" "}
+          {isSelf ? <span className="text-muted-foreground">(you)</span> : null}
         </div>
-        <div className="mt-1 text-xs text-muted-foreground">Added {formatReceived(member.createdAt)}</div>
+        <div className="mt-1 text-xs text-muted-foreground">
+          Added {formatReceived(member.createdAt)}
+        </div>
         {rowError ? <p className="mt-2 max-w-sm text-xs text-destructive">{rowError}</p> : null}
       </td>
       <td className="px-4 py-4">
