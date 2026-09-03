@@ -127,3 +127,4 @@ revoke all on function private.admin_update_staff_membership(uuid, public.staff_
 revoke all on function private.admin_update_staff_membership(uuid, public.staff_role, public.membership_status) from anon;
 revoke all on function private.admin_update_staff_membership(uuid, public.staff_role, public.membership_status) from authenticated;
 grant execute on function private.admin_update_staff_membership(uuid, public.staff_role, public.membership_status) to authenticated;
+
