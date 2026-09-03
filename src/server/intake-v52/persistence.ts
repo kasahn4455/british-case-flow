@@ -47,6 +47,18 @@ function serviceHeaders(secretKey: string): HeadersInit {
   };
 }
 
+async function fetchBackend(url: URL, init: RequestInit, operation: string): Promise<Response> {
+  try {
+    return await fetch(url, {
+      ...init,
+      cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
+    });
+  } catch {
+    throw new BackendPersistenceError(`${operation} request failed`);
+  }
+}
+
 export async function resolvePublishedForm(
   publishedFormId: string,
 ): Promise<ResolvedPublishedForm | null> {
@@ -57,17 +69,23 @@ export async function resolvePublishedForm(
   url.searchParams.set("select", "id,firm_id,configuration_id");
   url.searchParams.set("limit", "1");
 
-  const response = await fetch(url, {
-    headers: serviceHeaders(env.SUPABASE_SECRET_KEY),
-    cache: "no-store",
-  });
+  const response = await fetchBackend(
+    url,
+    { headers: serviceHeaders(env.SUPABASE_SECRET_KEY) },
+    "Published form resolution",
+  );
   if (!response.ok) {
     throw new BackendPersistenceError(
       `Published form resolution failed with status ${response.status}`,
     );
   }
 
-  const rows = (await response.json()) as ResolvedPublishedForm[];
+  let rows: ResolvedPublishedForm[];
+  try {
+    rows = (await response.json()) as ResolvedPublishedForm[];
+  } catch {
+    throw new BackendPersistenceError("Published form resolution returned an invalid response");
+  }
   return rows[0] ?? null;
 }
 
@@ -80,22 +98,25 @@ export async function persistSubmissionAtomically(args: {
   const env = getBackendEnv();
   const url = new URL("/rest/v1/rpc/persist_intake_submission_v52", env.SUPABASE_URL);
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: serviceHeaders(env.SUPABASE_SECRET_KEY),
-    cache: "no-store",
-    body: JSON.stringify({
-      p_published_form_id: args.publishedFormId,
-      p_submission: args.submission,
-      p_submission_hash: args.submissionHash,
-      p_derived_facts: args.routing.derived_facts,
-      p_priority: args.routing.priority,
-      p_matched_rule_ids: args.routing.matched_rule_ids,
-      p_priority_reason: args.routing.priority_reason,
-      p_schema_version: "5.2",
-      p_routing_rule_version: args.routing.routing_rule_version,
-    }),
-  });
+  const response = await fetchBackend(
+    url,
+    {
+      method: "POST",
+      headers: serviceHeaders(env.SUPABASE_SECRET_KEY),
+      body: JSON.stringify({
+        p_published_form_id: args.publishedFormId,
+        p_submission: args.submission,
+        p_submission_hash: args.submissionHash,
+        p_derived_facts: args.routing.derived_facts,
+        p_priority: args.routing.priority,
+        p_matched_rule_ids: args.routing.matched_rule_ids,
+        p_priority_reason: args.routing.priority_reason,
+        p_schema_version: "5.2",
+        p_routing_rule_version: args.routing.routing_rule_version,
+      }),
+    },
+    "Atomic submission persistence",
+  );
 
   if (!response.ok) {
     throw new BackendPersistenceError(
@@ -103,7 +124,13 @@ export async function persistSubmissionAtomically(args: {
     );
   }
 
-  const result = (await response.json()) as PersistedSubmissionResult | PersistedSubmissionResult[];
+  let result: PersistedSubmissionResult | PersistedSubmissionResult[];
+  try {
+    result = (await response.json()) as PersistedSubmissionResult | PersistedSubmissionResult[];
+  } catch {
+    throw new BackendPersistenceError("Atomic submission persistence returned an invalid response");
+  }
+
   const normalized = Array.isArray(result) ? result[0] : result;
   if (!normalized?.enquiry_id || !normalized.enquiry_reference) {
     throw new BackendPersistenceError("Atomic submission persistence returned an invalid response");

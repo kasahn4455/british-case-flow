@@ -45,26 +45,39 @@ export async function checkIntakeRateLimits(args: {
 }) {
   const env = getDatabaseEnv();
   const url = new URL("/rest/v1/rpc/check_intake_rate_limits_v1", env.SUPABASE_URL);
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      apikey: env.SUPABASE_SECRET_KEY,
-      "content-type": "application/json",
-    },
-    cache: "no-store",
-    body: JSON.stringify({
-      p_published_form_id: args.publishedFormId,
-      p_ip_hash: args.ipHash,
-      p_session_hash: args.sessionHash,
-      p_now: (args.now ?? new Date()).toISOString(),
-    }),
-  });
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: {
+        apikey: env.SUPABASE_SECRET_KEY,
+        "content-type": "application/json",
+      },
+      cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
+      body: JSON.stringify({
+        p_published_form_id: args.publishedFormId,
+        p_ip_hash: args.ipHash,
+        p_session_hash: args.sessionHash,
+        p_now: (args.now ?? new Date()).toISOString(),
+      }),
+    });
+  } catch {
+    throw new AbuseDatabaseError("Rate-limit database request failed");
+  }
 
   if (!response.ok) {
     throw new AbuseDatabaseError(`Rate-limit RPC failed with status ${response.status}`);
   }
 
-  const payload = (await response.json()) as unknown;
+  let payload: unknown;
+  try {
+    payload = (await response.json()) as unknown;
+  } catch {
+    throw new AbuseDatabaseError("Rate-limit RPC returned an invalid response");
+  }
+
   const first = Array.isArray(payload) ? payload[0] : payload;
   const parsed = rateLimitResultSchema.safeParse(first);
   if (!parsed.success) throw new AbuseDatabaseError("Rate-limit RPC returned an invalid response");
