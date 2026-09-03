@@ -1,7 +1,7 @@
 create extension if not exists pgtap with schema extensions;
 
 begin;
-select plan(10);
+select plan(16);
 
 select ok(
   to_regprocedure('public.list_firm_staff_for_admin()') is not null,
@@ -71,6 +71,39 @@ select ok(
     'EXECUTE'
   ),
   'authenticated role can call the checked public staff-update RPC'
+);
+
+select ok(
+  not has_function_privilege('anon', 'public.list_firm_staff_for_admin()', 'EXECUTE'),
+  'anonymous role cannot call the public staff-list RPC'
+);
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.admin_update_staff_membership(uuid,public.staff_role,public.membership_status)',
+    'EXECUTE'
+  ),
+  'anonymous role cannot call the public staff-update RPC'
+);
+select ok(
+  not has_function_privilege('anon', 'private.list_firm_staff_for_admin()', 'EXECUTE'),
+  'anonymous role cannot call the private staff-list helper'
+);
+select ok(
+  not has_function_privilege(
+    'anon',
+    'private.admin_update_staff_membership(uuid,public.staff_role,public.membership_status)',
+    'EXECUTE'
+  ),
+  'anonymous role cannot call the private staff-update helper'
+);
+select ok(
+  not has_schema_privilege('anon', 'private', 'USAGE'),
+  'anonymous role cannot resolve objects in the private schema'
+);
+select ok(
+  has_schema_privilege('authenticated', 'private', 'USAGE'),
+  'authenticated wrapper calls retain required private schema usage'
 );
 
 select * from finish();
