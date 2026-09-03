@@ -49,9 +49,7 @@ test("database scheduler header authorizes only the Vault-backed token", async (
       false,
     );
     assert.equal(
-      await isAuthorizedWorkerRequest(
-        new Request("https://example.test/api/workers/outbox"),
-      ),
+      await isAuthorizedWorkerRequest(new Request("https://example.test/api/workers/outbox")),
       false,
     );
     assert.equal(calls, 2);
