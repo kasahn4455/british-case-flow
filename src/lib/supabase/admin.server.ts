@@ -15,10 +15,12 @@ export class SupabaseAdminConfigurationError extends Error {
 
 function runtimeEnv(): Record<string, string | undefined> {
   return (
-    globalThis as typeof globalThis & {
-      process?: { env?: Record<string, string | undefined> };
-    }
-  ).process?.env ?? {};
+    (
+      globalThis as typeof globalThis & {
+        process?: { env?: Record<string, string | undefined> };
+      }
+    ).process?.env ?? {}
+  );
 }
 
 export function createSupabaseAdminClient() {
