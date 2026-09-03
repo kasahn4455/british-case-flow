@@ -1,14 +1,22 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { DetailField } from "@/components/staff/DetailField";
 import { getStaffAuthState } from "@/lib/auth/staff-auth.functions";
+import { getFirmSettingsOverview } from "@/lib/enquiries/firm-settings.functions";
+import { formatReceived } from "@/lib/enquiries/live-enquiries";
 import { processFirmOutboxNow } from "@/lib/enquiries/outbox-admin.functions";
 import { AUTOMATED_RULES_STATEMENT, FIRM } from "@/lib/mock/firm";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export const Route = createFileRoute("/app/settings")({
-  loader: () => getStaffAuthState(),
+  loader: async () => {
+    const [authState, settingsOverview] = await Promise.all([
+      getStaffAuthState(),
+      getFirmSettingsOverview(),
+    ]);
+    return { authState, settingsOverview };
+  },
   head: () => ({
     meta: [
       { title: `Firm settings — ${FIRM.shortName} intake workspace` },
@@ -28,8 +36,9 @@ export const Route = createFileRoute("/app/settings")({
 });
 
 function SettingsPage() {
-  const authState = Route.useLoaderData();
+  const { authState, settingsOverview } = Route.useLoaderData();
   const navigate = useNavigate();
+  const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
@@ -38,6 +47,8 @@ function SettingsPage() {
   const [deliveryError, setDeliveryError] = useState("");
   const [delivering, setDelivering] = useState(false);
   const isAdmin = authState.kind === "staff" && authState.role === "admin";
+  const publishedForm = settingsOverview.publishedForm;
+  const notificationHealth = settingsOverview.notificationHealth;
 
   return (
     <div className="space-y-6">
@@ -46,7 +57,8 @@ function SettingsPage() {
           Firm settings
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Firm configuration is read-only in this phase. Account security is live.
+          Firm configuration is read-only in this phase. Account security and operational delivery
+          status are live.
         </p>
       </div>
 
@@ -73,23 +85,94 @@ function SettingsPage() {
             Published intake form
           </h2>
           <dl className="mt-2">
-            <DetailField label="Form reference">demo-form</DetailField>
-            <DetailField label="Public link">/intake/demo-form</DetailField>
+            <DetailField label="Form reference">
+              {publishedForm?.id ?? "No published form"}
+            </DetailField>
+            <DetailField label="Status">
+              {publishedForm?.status ?? "Not available"}
+            </DetailField>
+            <DetailField label="Public link">
+              {publishedForm ? (
+                <a
+                  href={`/intake/${encodeURIComponent(publishedForm.id)}`}
+                  className="break-all underline underline-offset-4"
+                >
+                  /intake/{publishedForm.id}
+                </a>
+              ) : (
+                "Not available"
+              )}
+            </DetailField>
             <DetailField label="Automated rules notice">{AUTOMATED_RULES_STATEMENT}</DetailField>
           </dl>
         </section>
 
-        {isAdmin ? (
+        {isAdmin && notificationHealth ? (
           <section className="rounded-md border border-border bg-card px-5 py-5 lg:col-span-2">
-            <div className="max-w-xl">
+            <div>
               <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                Notification delivery
+                Notification health
               </h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Process this firm&apos;s pending notification queue now. In email test mode, every
-                message is rerouted to the configured safe test inbox rather than the prospect or
-                firm recipient.
+              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                New notification events wake the delivery worker automatically. A scheduled retry
+                also runs every two minutes. The manual control below is a recovery fallback only.
               </p>
+
+              <dl className="mt-4 grid gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
+                <DetailField label="Delivery mode">
+                  {notificationHealth.deliveryMode === "test"
+                    ? "Safe test mode"
+                    : notificationHealth.deliveryMode === "live"
+                      ? "Live email"
+                      : "Not configured"}
+                </DetailField>
+                <DetailField label="Automatic scheduler">
+                  {notificationHealth.schedulerActive ? "Active" : "Inactive"}
+                </DetailField>
+                <DetailField label="Retry schedule">
+                  {notificationHealth.schedulerSchedule ?? "Not scheduled"}
+                </DetailField>
+                <DetailField label="Last scheduler run">
+                  {notificationHealth.schedulerLastRunAt
+                    ? `${notificationHealth.schedulerLastStatus ?? "unknown"} · ${formatReceived(notificationHealth.schedulerLastRunAt)}`
+                    : "No recorded run"}
+                </DetailField>
+                <DetailField label="Pending">
+                  {notificationHealth.pendingCount.toLocaleString("en-GB")}
+                </DetailField>
+                <DetailField label="Processing">
+                  {notificationHealth.processingCount.toLocaleString("en-GB")}
+                </DetailField>
+                <DetailField label="Retryable failures">
+                  {notificationHealth.failedCount.toLocaleString("en-GB")}
+                </DetailField>
+                <DetailField label="Dead letters">
+                  {notificationHealth.deadLetterCount.toLocaleString("en-GB")}
+                </DetailField>
+                <DetailField label="Delivered">
+                  {notificationHealth.deliveredCount.toLocaleString("en-GB")}
+                </DetailField>
+                <DetailField label="Last delivered">
+                  {notificationHealth.lastDeliveredAt
+                    ? formatReceived(notificationHealth.lastDeliveredAt)
+                    : "No delivery recorded"}
+                </DetailField>
+              </dl>
+
+              {notificationHealth.deliveryMode === "test" ? (
+                <p className="mt-4 rounded-md border border-border bg-surface px-3 py-3 text-sm text-muted-foreground">
+                  Safe test mode is active. Prospect and firm email addresses are not used for
+                  delivery.
+                </p>
+              ) : null}
+              {notificationHealth.deadLetterCount > 0 || !notificationHealth.schedulerActive ? (
+                <p
+                  role="alert"
+                  className="mt-4 rounded-md border border-destructive/40 px-3 py-3 text-sm text-destructive"
+                >
+                  Notification delivery needs administrator attention.
+                </p>
+              ) : null}
 
               {deliveryMessage ? (
                 <p className="mt-4 rounded-md border border-border px-3 py-3 text-sm">
@@ -108,7 +191,7 @@ function SettingsPage() {
               <button
                 type="button"
                 disabled={delivering}
-                className="mt-4 h-11 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-4 h-11 rounded-md border border-border bg-card px-5 text-sm font-semibold transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={async () => {
                   setDeliveryMessage("");
                   setDeliveryError("");
@@ -121,6 +204,7 @@ function SettingsPage() {
                     setDeliveryMessage(
                       `Claimed ${result.claimed}; delivered ${result.delivered}; failed ${result.failed}.${providerDetails}`,
                     );
+                    await router.invalidate();
                   } catch (caught) {
                     console.error(caught);
                     setDeliveryError(
@@ -131,7 +215,7 @@ function SettingsPage() {
                   }
                 }}
               >
-                {delivering ? "Processing notifications…" : "Process pending notifications"}
+                {delivering ? "Running delivery…" : "Run delivery now (fallback)"}
               </button>
             </div>
           </section>
