@@ -20,9 +20,12 @@ on:
       - "src/routes/intake.$publishedFormId.index.tsx"
       - "src/routes/api.intake.$publishedFormId.ts"
       - "src/routes/api.workers.*.ts"
+      - "src/routes/app.tsx"
       - "src/routes/app.enquiries.index.tsx"
       - "src/routes/app.enquiries.$id.tsx"
       - "src/routes/app.settings.tsx"
+      - "src/routes/app.staff.tsx"
+      - "src/routes/staff.activate.tsx"
       - "src/start.ts"
       - "tests/backend/**"
       - "supabase/**"
@@ -87,9 +90,12 @@ jobs:
           'src/routes/api.intake.$publishedFormId.ts'
           src/routes/api.workers.outbox.ts
           src/routes/api.workers.maintenance.ts
+          src/routes/app.tsx
           src/routes/app.enquiries.index.tsx
           'src/routes/app.enquiries.$id.tsx'
           src/routes/app.settings.tsx
+          src/routes/app.staff.tsx
+          src/routes/staff.activate.tsx
           src/start.ts
           tests/backend
 

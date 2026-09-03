@@ -328,7 +328,6 @@ function SettingsPage() {
         <section className="rounded-md border border-dashed border-border bg-surface px-5 py-4 lg:col-span-2">
           <h2 className="text-sm font-semibold text-foreground">Reserved for later phases</h2>
           <ul className="mt-2 grid gap-1 text-sm text-muted-foreground sm:grid-cols-2">
-            <li>Staff accounts and permissions</li>
             <li>Routing and priority rule configuration</li>
             <li>Acknowledgement templates</li>
             <li>Conflict-check workflow</li>
