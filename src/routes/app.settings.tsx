@@ -88,9 +88,7 @@ function SettingsPage() {
             <DetailField label="Form reference">
               {publishedForm?.id ?? "No published form"}
             </DetailField>
-            <DetailField label="Status">
-              {publishedForm?.status ?? "Not available"}
-            </DetailField>
+            <DetailField label="Status">{publishedForm?.status ?? "Not available"}</DetailField>
             <DetailField label="Public link">
               {publishedForm ? (
                 <a
