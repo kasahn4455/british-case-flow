@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { getOutboxSchedulerToken } from "./database";
+import { getOutboxSchedulerToken } from "./database.ts";
 
 const envSchema = z.object({
   OUTBOX_WORKER_TOKEN: z.string().min(32),
