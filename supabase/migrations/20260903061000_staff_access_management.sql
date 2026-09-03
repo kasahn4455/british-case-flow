@@ -40,7 +40,7 @@ begin
   select
     sm.id,
     sm.auth_user_id,
-    u.email,
+    u.email::text,
     sm.role,
     sm.status,
     u.invited_at,
