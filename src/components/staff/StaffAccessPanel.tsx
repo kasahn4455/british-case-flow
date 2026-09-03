@@ -172,7 +172,7 @@ function StaffAccessRow({ member, isSelf, onChanged }: RowProps) {
           ? "Invitation pending"
           : "Active";
 
-  async function apply(nextRole: StaffRole, nextStatus: "active" | "suspended") {
+  async function apply(nextRole: StaffRole, nextStatus: "active" | "suspended" | "revoked") {
     setBusy(true);
     setRowError("");
     try {
@@ -255,6 +255,23 @@ function StaffAccessRow({ member, isSelf, onChanged }: RowProps) {
               className="h-9 rounded-md border border-border px-3 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50"
             >
               Reactivate
+            </button>
+          ) : null}
+          {member.status !== "revoked" ? (
+            <button
+              type="button"
+              disabled={!canManage || busy}
+              onClick={() => {
+                const action = member.confirmedAt
+                  ? "remove this staff member's access"
+                  : "cancel this invitation";
+                if (window.confirm(`Are you sure you want to ${action}? This action is audited.`)) {
+                  void apply(member.role, "revoked");
+                }
+              }}
+              className="h-9 rounded-md border border-destructive/40 px-3 text-xs font-semibold text-destructive disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {member.confirmedAt ? "Remove access" : "Cancel invitation"}
             </button>
           ) : null}
         </div>

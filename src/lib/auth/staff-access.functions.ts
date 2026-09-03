@@ -8,7 +8,7 @@ import { readStaffAuthState } from "./staff-auth.server";
 import type { StaffRole } from "./staff-auth-state";
 
 const staffRoleSchema = z.enum(["staff", "senior", "manager", "admin"]);
-const managedStatusSchema = z.enum(["active", "suspended"]);
+const managedStatusSchema = z.enum(["active", "suspended", "revoked"]);
 
 const staffMemberRowSchema = z.object({
   membership_id: z.string().uuid(),
